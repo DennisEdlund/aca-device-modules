@@ -41,7 +41,10 @@ class Panasonic::Projector::Tcp
         
         # The projector drops the connection when there is no activity
         schedule.every('60s') do
-            power?({priority: 0}) if self[:connected]
+            if self[:connected]
+                power?({priority: 0})
+                lamp_hours?(priority: 0)
+            end
         end
     end
 
@@ -62,7 +65,8 @@ class Panasonic::Projector::Tcp
         freeze: :OFZ,
         input: :IIS,
         mute: :OSH,
-        lamp: :"Q$S"
+        lamp: :"Q$S",
+        lamp_hours: :"Q$L"
     }
     COMMANDS.merge!(COMMANDS.invert)
     
@@ -89,6 +93,11 @@ class Panasonic::Projector::Tcp
     def power?(options = {}, &block)
         options[:emit] = block if block_given?
         do_send(:lamp, options)
+    end
+
+    def lamp_hours?(options = {})
+        options[:emit] = block if block_given?
+        do_send(:lamp_hours, 1, options)
     end
     
     
@@ -199,32 +208,37 @@ class Panasonic::Projector::Tcp
             when :mute
                 self[:mute] = val.to_i == 1
             else
-                if command && command[:name] == :lamp
-                    ival = resp[0].to_i
-                    self[:power] = ival == 1 || ival == 2
-                    self[:warming] = ival == 1
-                    self[:cooling] = ival == 3
-    
-                    if (self[:warming] || self[:cooling]) && !@check_scheduled && !self[:stable_state]
-                        @check_scheduled = true
-                        schedule.in('13s') do
-                            @check_scheduled = false
-                            logger.debug "-- checking panasonic state"
-                            power?({:priority => 0}) do
-                                state = self[:power]
-                                if state != self[:power_target]
-                                    if self[:power_target] || !self[:cooling]
+                if command
+                    if command[:name] == :lamp
+                        ival = resp[0].to_i
+                        self[:power] = ival == 1 || ival == 2
+                        self[:warming] = ival == 1
+                        self[:cooling] = ival == 3
+        
+                        if (self[:warming] || self[:cooling]) && !@check_scheduled && !self[:stable_state]
+                            @check_scheduled = true
+                            schedule.in('13s') do
+                                @check_scheduled = false
+                                logger.debug "-- checking panasonic state"
+                                power?({:priority => 0}) do
+                                    state = self[:power]
+                                    if state != self[:power_target]
+                                        if self[:power_target] || !self[:cooling]
+                                            power(self[:power_target])
+                                        end
+                                    elsif self[:power_target] && self[:cooling]
                                         power(self[:power_target])
+                                    else
+                                        self[:stable_state] = true
+                                        switch_to(self[:input]) if self[:power_target] == On && !self[:input].nil?
                                     end
-                                elsif self[:power_target] && self[:cooling]
-                                    power(self[:power_target])
-                                else
-                                    self[:stable_state] = true
-                                    switch_to(self[:input]) if self[:power_target] == On && !self[:input].nil?
                                 end
                             end
-                        end
-                    end    
+                        end 
+                    elsif command[:name] == :lamp_hours
+                        # Resp looks like: "001682"
+                        self[:lamp_usage] = data.to_i
+                    end
                 end
             end
         end

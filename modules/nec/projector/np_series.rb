@@ -149,8 +149,10 @@ class Nec::Projector::NpSeries
     #    http://blog.jayfields.com/2008/02/ruby-dynamically-define-method.html
     #
     COMMAND.each_key do |command|
-        define_method command do
-            send(COMMAND[command], :hex_string => true, :name => command)
+        define_method command do |opts = {}|
+            opts[:hex_string] = true
+            opts[:name] = command
+            send(COMMAND[command], opts)
         end
     end
 
@@ -400,9 +402,10 @@ class Nec::Projector::NpSeries
     def do_poll
         power?({:priority => 0}) do
             if self[:power]
-                status_input
-                status_mute
-                background_black
+                status_input(priority: 0)
+                status_mute(priority: 0)
+                background_black(priority: 0)
+                lamp_information(priority: 0)
             end
         end
         #projector_information
@@ -526,8 +529,8 @@ class Nec::Projector::NpSeries
         first = INPUT_MAP[data[-15]]
         return :ignore unless first
 
-        self[:input_selected] = first[data[-14]]
-        self[:input] = self[:input_selected].nil? ? :unknown : self[:input_selected][0]
+        self[:input_selected] = first[data[-14]] || [:unknown]
+        self[:input] = self[:input_selected][0]
         if data[-17] == 0x01
             command[:delay_on_receive] = 3000        # still processing signal
             status_input
@@ -622,8 +625,8 @@ class Nec::Projector::NpSeries
             shift += 8
         end
 
-        self[:lamp_usage] = [lamp / 3600]    # Lamp usage in hours
-        self[:filter_usage] = [filter / 3600]
+        self[:lamp_usage] = lamp / 3600    # Lamp usage in hours
+        self[:filter_usage] = filter / 3600
     end
 
 
