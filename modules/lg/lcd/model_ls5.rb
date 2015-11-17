@@ -14,19 +14,29 @@ class Lg::Lcd::ModelLs5
 
 
     def on_load
-        @polling_timer = schedule.every('40s') do
-            # No point polling if we can't connect to the display
-            if self[:connected]
-                logger.debug "-- Polling Display"
-                do_poll
-            end
-        end
-
         on_update
     end
 
     def on_update
         @id = (setting(:display_id) || 1).to_s.rjust(2, '0')
+    end
+
+    def connected
+        do_poll
+
+        @polling_timer = schedule.every('50s') do
+            logger.debug "-- Polling Display"
+            do_poll
+        end
+    end
+
+    def disconnected
+        #
+        # Disconnected may be called without calling connected
+        #
+        self[:power] = false  # As we may need to use wake on lan
+        @polling_timer.cancel if @polling_timer
+        @polling_timer = nil
     end
 
 
@@ -38,14 +48,25 @@ class Lg::Lcd::ModelLs5
         volume: 'f',
         contrast: 'g',
         brightness: 'h',
-        sharpness: 'k'
+        sharpness: 'k',
+        wol: 'w'
     }
     Lookup = Command.invert
 
 
-    def power(state)
-        val = is_affirmative?(state) ? 1 : 0
-        do_send(Command[:power], val, name: :power)
+    def power(state, broadcast = nil)
+        power_on = is_affirmative?(state)
+        if power_on
+            wake(broadcast)
+        end
+
+        if self[:connected]
+            mute_display !power_on
+        end
+    end
+
+    def hard_off
+        do_send(Command[:power], 0, name: :power)
     end
 
 
@@ -57,14 +78,14 @@ class Lg::Lcd::ModelLs5
         display_port: 208 
     }
     Inputs.merge!(Inputs.invert)
-    def input(source)
+    def switch_to(source)
         val = Inputs[source.to_sym]
         do_send(Command[:input], val, 'x'.freeze, name: :input)
     end
 
     # Audio mute
     def mute_audio(state = true)
-        val = is_affirmative?(state) ? 1 : 0
+        val = is_affirmative?(state) ? 0 : 1
         do_send(Command[:volume_mute], val, name: :volume_mute)
     end
     alias_method :mute, :mute_audio
@@ -126,6 +147,27 @@ class Lg::Lcd::ModelLs5
     end
 
 
+    def wake_on_lan(enable = true)
+        val = is_affirmative?(enable) ? 1 : 0
+        do_send(Command[:wol], val, :f, name: :enable_wol)
+    end
+
+    def wake(broadcast = nil)
+        mac = setting(:mac_address)
+        if mac
+            # config is the database model representing this device
+            wake_device(mac, broadcast)
+            logger.debug { 
+                info = "Wake on Lan for MAC #{mac}"
+                info << " directed to VLAN #{broadcast}" if broadcast
+                info
+            }
+        else
+            logger.debug { "No MAC address provided" }
+        end
+    end
+
+
     protected
 
 
@@ -156,7 +198,7 @@ class Lg::Lcd::ModelLs5
         when :screen_mute
             self[:display_mute] = resp_value == 1
         when :volume_mute
-            self[:audio_mute] = resp_value == 1
+            self[:audio_mute] = resp_value == 0
         when :contrast
             self[:contrast] = resp_value
         when :brightness
@@ -165,6 +207,8 @@ class Lg::Lcd::ModelLs5
             self[:sharpness] = resp_value
         when :volume
             self[:volume] = resp_value
+        when :wol
+            logger.debug { "WOL Enabled!" }
         else
             return :ignore
         end
