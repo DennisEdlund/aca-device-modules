@@ -38,6 +38,7 @@ class Planar::ClarityMatrix
     def power?(options = {}, &block)
         options[:emit] = block if block_given?
         options[:wait] = true
+        options[:name] = :pwr_query
         send("op A1 display.power ? \r", options)
     end
 
@@ -45,7 +46,8 @@ class Planar::ClarityMatrix
         power? do
             result = self[:power]
 
-            options[:delay] = 3
+            options[:delay] = 3000
+            options[:name] = :power
             if is_affirmative?(state) && result == Off
                 send("op ** display.power = on \r", options)
                 power?
@@ -68,7 +70,8 @@ class Planar::ClarityMatrix
         # video wall specific functions
     end
 
-    def recall(preset)
+    def recall(preset, options = {})
+        options[:name] = :recall
         send("op ** slot.recall (#{preset}) \r", options)
     end
 
@@ -79,7 +82,7 @@ class Planar::ClarityMatrix
     end
 
 
-    def received(data, command)
+    def received(data, resolve, command)
         logger.debug "Vid Wall: #{data}"
 
         data = data.split('.')      # OPA1DISPLAY.POWER=ON || OPA1SLOT.CURRENT=0
