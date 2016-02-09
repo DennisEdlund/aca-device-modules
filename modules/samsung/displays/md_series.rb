@@ -6,6 +6,13 @@ class Samsung::Displays::MdSeries
     include ::Orchestrator::Constants
     include ::Orchestrator::Transcoder
 
+
+    # Discovery Information
+    tcp_port 1515
+    descriptive_name 'Samsung MD Series LCD'
+    generic_name :Display
+
+    # Communication settings
     tokenize indicator: "\xAA", callback: :check_length
 
 
@@ -87,6 +94,7 @@ class Samsung::Displays::MdSeries
         elsif !self[:connected]
             wake(broadcast)
         else
+            do_send(:hard_off, 1)
             do_send(:power, 0)
         end
     end

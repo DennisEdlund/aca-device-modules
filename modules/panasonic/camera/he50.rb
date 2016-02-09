@@ -7,6 +7,12 @@ class Panasonic::Camera::He50
     include ::Orchestrator::Transcoder
 
 
+    # Discovery Information
+    implements :service
+    descriptive_name 'Panasonic PTZ Camera HE50/60'
+    generic_name :Camera
+
+    # Communication settings
     delay between_sends: 150
     inactivity_timeout 1500
     keepalive false
@@ -167,6 +173,28 @@ class Panasonic::Camera::He50
                 :success
             end
         end
+    end
+
+    def adjust_tilt(direction)
+        speed = 0x50
+        if direction == 'down'
+            speed = 0x75
+        elsif direction == 'up'
+            speed = 0x25
+        end
+
+        joystick(0x50, speed)
+    end
+
+    def adjust_pan(direction)
+        speed = 0x50
+        if direction == 'right'
+            speed = 0x75
+        elsif direction == 'left'
+            speed = 0x25
+        end
+
+        joystick(speed, 0x50)
     end
 
     def limit(direction, state = nil)

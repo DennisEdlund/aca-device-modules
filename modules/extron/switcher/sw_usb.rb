@@ -16,14 +16,16 @@ module Extron::Switcher; end
 
 
 class Extron::Switcher::SwUsb < Extron::Base
+    descriptive_name 'Extron USB Switcher'
+    generic_name :Switcher
 
     def switch_to(input = nil)
-        send("#{input}!")
+        do_send("#{input}!")
     end
 
     def switch(map)
         map.each do |input, outputs|
-            send("#{input}!")
+            do_send("#{input}!")
         end
     end
 

@@ -3,7 +3,15 @@ module Aca; end
 ::Orchestrator::DependencyManager.load('Aca::Joiner', :logic)
 
 class Aca::MeetingRoom < Aca::Joiner
+    descriptive_name 'ACA Meeting Room Logic'
+    generic_name :System
+    default_settings joiner_driver: :System
+    implements :logic
+
+
     def on_load
+        @waiting_for = {}
+
         # Call the Joiner load function
         super
     end
@@ -28,6 +36,10 @@ class Aca::MeetingRoom < Aca::Joiner
                     @input_tab_mapping[source.to_sym] = input
                 end
             end
+
+            # Grab any video wall details
+            # {Display_1: {module: VidWall, input: display_port} }
+            @vidwalls = setting(:vidwalls) || {}
 
             # Grab the list of inputs and outputs
             self[:sources] = setting(:sources)
@@ -136,14 +148,25 @@ class Aca::MeetingRoom < Aca::Joiner
             output1 = self[:outputs].keys.first
             current = self[output1]
             if current && current[:source] != :none && current[:source] != :sharing_input
-                perform_action(mod: :System, func: :do_share, args: [true, current[:source]], skipMe: true)
+                perform_action(mod: :System, func: :do_share, args: [true, current[:source]], skipMe: true).then do
+                    # defaults = {
+                        # sharing_routes: {input: [outputs]}
+                        # on_sharing_preset: 'preset_name'
+                    # }
+                    system[:Mixer].trigger(@defaults[:on_sharing_trigger]) if @defaults[:on_sharing_trigger]
+                    system[:Switcher].switch(@defaults[:sharing_routes]) if @defaults[:sharing_routes]
+                end
             end
         end
+
+        promise
     end
 
     def unjoin
         perform_action(mod: :System, func: :enable_sharing, args: [false]).then do
-            super
+            super.then do
+                system[:Mixer].trigger(@defaults[:off_sharing_trigger]) if @defaults[:off_sharing_trigger]
+            end
         end
     end
 
@@ -151,7 +174,9 @@ class Aca::MeetingRoom < Aca::Joiner
         present_actual(source, display)
 
         # Switch Joined rooms to the sharing input (use skipme param)
-        perform_action(mod: :System, func: :do_share, args: [true, source.to_sym], skipMe: true)
+        perform_action(mod: :System, func: :do_share, args: [true, source.to_sym], skipMe: true).then do
+            system[:Switcher].switch(@defaults[:sharing_routes]) if @defaults[:sharing_routes]
+        end
     end
 
     def present_actual(source, display)
@@ -345,7 +370,9 @@ class Aca::MeetingRoom < Aca::Joiner
             end
         else
             unjoin.then do
-                shutdown_actual
+                thread.schedule do
+                    shutdown_actual
+                end
             end
         end
     end
@@ -387,6 +414,19 @@ class Aca::MeetingRoom < Aca::Joiner
                     unless screen_info.nil?
                         screen = system.get_implicit(screen_info[:module])
                         screen.up(screen_info[:index])
+                    end
+
+                    # Raise the lifter if one exists
+                    if value[:lifter]
+                        lift = system.get_implicit(value[:lifter][:module])
+                        lift_cool_down = (value[:lifter][:cool_down] || 10) * 1000
+
+                        # ensure the display doesn't turn on (we might still be booting)
+                        @waiting_for = {}
+
+                        schedule.in(lift_cool_down) do
+                            lift.up(value[:lifter][:index] || 1)
+                        end
                     end
                 end
 
@@ -433,6 +473,11 @@ class Aca::MeetingRoom < Aca::Joiner
         system.all(:Camera).power(Off)
         system.all(:Visualiser).power(Off)
 
+        # Turn off video wall slave displays
+        @vidwalls.each do |key, details|
+            system.all(details[:module]).power(Off)
+        end
+
         self[:state] = :shutdown
     end
 
@@ -458,6 +503,9 @@ class Aca::MeetingRoom < Aca::Joiner
         return unless vc[:content]
         source = self[:sources][inp.to_sym]
         system[:Switcher].switch({source[:input] => vc[:content]})
+
+        # So we can keep the UI in sync
+        self[:vc_content_source] = inp
     end
 
 
@@ -554,24 +602,72 @@ class Aca::MeetingRoom < Aca::Joiner
         disp_source = self[:sources][source]
 
 
+        # We might not actually want to switch anything (support tab)
+        # Especially if the room only as a single display (switch on tab select)
+        return if disp_source[:ignore]
+
+
         # Task 1: switch the display on and to the correct source
         unless disp_info[:no_mod]
             disp_mod = system.get_implicit(display)
 
             if disp_mod[:power] == Off || disp_mod[:power_target] == Off
                 arity = disp_mod.arity(:power)
+                wall_details = @vidwalls[display]
+                wall_display = system.all(wall_details[:module]) if wall_details
 
-                # Check if we need to broadcast to turn it on
-                if setting(:broadcast) && check_arity(arity)
-                    disp_mod.power(On, setting(:broadcast))
+                turn_on_display = proc {
+                    # Check if we need to broadcast to turn it on
+                    if setting(:broadcast) && check_arity(arity)
+                        disp_mod.power(On, setting(:broadcast))
+                        if wall_details
+                            wall_display.power(On, setting(:broadcast))
+                            wall_display.switch_to wall_details[:input]
+                        end
+                    else
+                        disp_mod.power(On)
+                        if wall_details
+                            wall_display.power(On)
+                            wall_display.switch_to wall_details[:input]
+                        end
+                    end
+
+                    # Set default levels if it was off
+                    if disp_info[:mixer_id]
+                        disp_mod.mute_audio if disp_mod.respond_to?(:mute_audio)
+                        disp_mod.volume(disp_mod[:volume_min] || 0) if disp_mod.respond_to?(:volume)
+                    else
+                        level = disp_info[:default_level] || @defaults[:output_level]
+                        disp_mod.volume level if level
+                    end
+                }
+
+                # Check if this display has a lifter attached
+                if disp_info[:lifter]
+                    lift = system.get_implicit(disp_info[:lifter][:module])
+                    lift_index = disp_info[:lifter][:index] || 1
+                    status_var = :"#{disp_info[:lifter][:binding] || :lifter}#{lift_index}"
+
+                    if lift[status_var] == :down
+                        turn_on_display.call
+                    else
+                        if @waiting_for[display]
+                            @waiting_for[display] = turn_on_display
+                        else
+                            @waiting_for[display] = turn_on_display
+                            schedule.in(disp_info[:lifter][:time] || '7s') do
+                                action = @waiting_for[display]
+                                if action
+                                    @waiting_for.delete(display)
+                                    action.call
+                                end
+                            end
+                        end
+                    end
+
+                    lift.down(lift_index)
                 else
-                    disp_mod.power(On)
-                end
-
-                # Set default levels if it was off
-                if not disp_info[:mixer_id]
-                    level = disp_info[:default_level] || @defaults[:output_level]
-                    disp_mod.volume level if level
+                    turn_on_display.call
                 end
 
             elsif disp_mod.respond_to?(:mute)
@@ -642,12 +738,36 @@ class Aca::MeetingRoom < Aca::Joiner
                     display.power Off
                 end
             end
+
+            @vidwalls.each do |key, details|
+                display = system.get_implicit(key)
+                if display
+                    arity = display.arity(:power)
+                    if check_arity(arity)
+                        walldisp = system.all(details[:module])
+                        walldisp.power(On, setting(:broadcast))
+                        walldisp.power Off
+                    end
+                else
+                    logger.error "Invalid video wall configuration!"
+                end
+            end
         end
     end
 
     def hard_off_displays
         system.all(:Display).each do |disp|
             disp.hard_off if disp.respond_to? :hard_off
+        end
+
+        @vidwalls.each do |key, details|
+            display = system.get_implicit(key)
+            if display.respond_to? :hard_off
+                walldisp = system.all(details[:module])
+                walldisp.hard_off
+            else
+                logger.error "Invalid video wall configuration!"
+            end
         end
     end
 

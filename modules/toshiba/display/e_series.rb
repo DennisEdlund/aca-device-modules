@@ -1,12 +1,18 @@
 module Toshiba; end
-module Toshiba::Displays; end
+module Toshiba::Display; end
 
 
-class Toshiba::Displays::ESeries
+class Toshiba::Display::ESeries
     include ::Orchestrator::Constants
     include ::Orchestrator::Transcoder
 
 
+    # Discovery Information
+    implements :device
+    descriptive_name 'Toshiba E-Series LCD Monitor'
+    generic_name :Display
+
+    # Communication settings
     tokenize indicator: "\x1D", msg_length: 2
     delay between_sends: 100
 
@@ -166,7 +172,7 @@ class Toshiba::Displays::ESeries
 
     def received(data, resolve, command)
         logger.debug {
-            cmd = "Toshiba sent #{data}"
+            cmd = "Toshiba sent 0x#{byte_to_hex(data)}"
             cmd << " for command #{command[:name]}" if command
             cmd
         }

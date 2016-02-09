@@ -5,6 +5,12 @@ class ScreenTechnics::Connect
     include ::Orchestrator::Constants
 
 
+    # Discovery Information
+    implements :service
+    descriptive_name 'Screen Technics Projector Screen Control'
+    generic_name :Screen
+
+    # Communication settings
     delay between_sends: 2000
     keepalive false
     inactivity_timeout 1500
@@ -29,7 +35,16 @@ class ScreenTechnics::Connect
     end
 
     def down(index = 1)
-        stop(index)
+        if self[:"screen#{index}"] == :down
+            down_only(index)
+        else
+            stop(index)
+            down_only(index)
+            self[:"screen#{index}"] = :down
+        end
+    end
+
+    def down_only(index = 1)
         do_send({
             state: :down,
             body: "Down#{index}=Down",
@@ -39,7 +54,16 @@ class ScreenTechnics::Connect
     end
 
     def up(index = 1)
-        stop(index)
+        if self[:"screen#{index}"] == :up
+            up_only(index)
+        else
+            stop(index)
+            up_only(index)
+            self[:"screen#{index}"] = :up
+        end
+    end
+
+    def up_only(index = 1)
         do_send({
             state: :up,
             body: "Up#{index}=Up",

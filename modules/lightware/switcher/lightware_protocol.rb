@@ -2,13 +2,16 @@ module Lightware; end
 module Lightware::Switcher; end
 
 
-# TCP Port: 10001
-
-
 class Lightware::Switcher::LightwareProtocol
     include ::Orchestrator::Constants
 
 
+    # Discovery Information
+    tcp_port 10001
+    descriptive_name 'Lightware Switcher'
+    generic_name :Switcher
+
+    # Communication settings
     # This will strip the brackets from the response data
     tokenize indicator: '(', delimiter: ")\r\n"
 
@@ -148,11 +151,13 @@ class Lightware::Switcher::LightwareProtocol
         logger.debug { "Matrix sent #{data}" }
 
         if data[0..2] == 'ERR'.freeze
-            err = "Matrix sent error #{data}: "
-            err << RespErrors[data[3..-1].to_i] || 'unknown error code'
-            err << "\nfor command #{command[:data]}" if command
-            logger.warn err
-            return :abort
+            logger.debug {
+                err = "Matrix sent error #{data}: "
+                err << (RespErrors[data[3..-1].to_i] || 'unknown error code')
+                err << "\nfor command #{command[:data]}" if command
+                err
+            }
+            return :success
         end
 
         case data[0]

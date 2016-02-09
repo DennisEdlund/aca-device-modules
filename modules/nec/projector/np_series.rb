@@ -48,6 +48,13 @@ class Nec::Projector::NpSeries
     include ::Orchestrator::Constants
     include ::Orchestrator::Transcoder
 
+
+    # Discovery Information
+    tcp_port 7142
+    descriptive_name 'NEC LCD Monitor'
+    generic_name :Display
+
+    # Communication settings
     delay between_sends: 100
 
 
@@ -269,7 +276,7 @@ class Nec::Projector::NpSeries
         :hdmi =>        0x1A,    # \
         :dvi =>            0x1A,    # | - These are the same
         :hdmi2 =>        0x1B,
-        :display_port => 0x1B,
+        :display_port => 0xA6,
 
         :lan =>            0x20,
         :viewer =>        0x1F
@@ -507,13 +514,16 @@ class Nec::Projector::NpSeries
             0x02 => [:composite],
             0x03 => [:svideo],
             0x06 => [:hdmi, :dvi],
-            0x07 => [:viewer]
+            0x07 => [:viewer],
+            0x21 => [:hdmi],
+            0x22 => [:display_port]
         },
         0x02 => {
             0x01 => [:vga2, :dvi_a, :rgbhv],
             0x04 => [:component2],
             0x06 => [:display_port, :hdmi2],
-            0x07 => [:lan]
+            0x07 => [:lan],
+            0x21 => [:hdmi2]
         },
         0x03 => {
             0x04 => [:component, :component1]
