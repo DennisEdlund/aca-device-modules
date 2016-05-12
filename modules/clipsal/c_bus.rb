@@ -64,7 +64,7 @@ class Clipsal::CBus
         application = application & 0xFF
         
         command = [0x05, application, 0x00]
-        if [On, 1, :on, 'on'].include?(state)
+        if is_affirmative? state
             state = On
             command << 0x79 # Group on
         else
@@ -77,9 +77,9 @@ class Clipsal::CBus
         
         do_send(command)
     end
-    
-    
-    def light_level(group, level, rate = 0b0001, application = 0x38)
+
+
+    def light_level(group, level, application = 0x38, rate = 0b0001)
         
         #
         # rates:
@@ -105,7 +105,7 @@ class Clipsal::CBus
 
 
 
-    def blinds(group, action, application = 0x38)
+    def blinds(application, group, action)
         group = group & 0xFF
         application = application & 0xFF
 
@@ -113,15 +113,18 @@ class Clipsal::CBus
         if is_affirmative?(action)
             action = Down
             command += [0x1A, group, 0x00]
+            self["blinds_group_#{group}"] = Down
         else
             command += [0x02, group]
 
             if is_negatory?(action)
                 action = Up
                 command << 0xFF
+                self["blinds_group_#{group}"] = Up
             else
-                # Stop (need to confirm this)
-                command << 0x05
+                # Stop
+                command << 5
+                self["blinds_group_#{group}"] = :stopped
             end
         end
 
@@ -198,14 +201,16 @@ class Clipsal::CBus
                 when 0x79            # Group on (ex: 05013800 7905 44)
                     self["lighting_group_#{commands.shift}"] = On
                 when 0x02 # Blinds up or stop
+                    # Example: 05083000022FFF93
                     group = commands.shift
                     value = commands.shift
                     if value == 0xFF
                         self["blinds_group_#{group}"] = Up
-                    elsif value == 0x05 # Value needs confirmation
+                    elsif value == 5
                         self["blinds_group_#{group}"] = :stopped
                     end
                 when 0x1A # Blinds down
+                    # Example: 050830001A2F007A
                     group = commands.shift
                     value = commands.shift
                     self["blinds_group_#{group}"] = Down if value == 0x00

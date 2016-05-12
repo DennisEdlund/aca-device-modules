@@ -39,6 +39,8 @@ class Vaddio::Camera::ClearViewPtzTelnet
     end
     
     def on_update
+        @presets = setting(:presets) || {}
+        self[:presets] = @presets.keys
     end
     
     def connected
@@ -77,12 +79,14 @@ class Vaddio::Camera::ClearViewPtzTelnet
         params = direction.to_sym == :stop ? direction : "#{direction} #{speed}"
         send "camera pan #{params}\r", name: :pan
     end
+    alias_method :adjust_pan, :pan
 
     # direction: up, down, stop
     def tilt(direction, speed = 10)
         params = direction.to_sym == :stop ? direction : "#{direction} #{speed}"
         send "camera tilt #{params}\r", name: :tilt
     end
+    alias_method :adjust_tilt, :tilt
 
     def home
         send "camera home\r", name: :home
@@ -91,7 +95,19 @@ class Vaddio::Camera::ClearViewPtzTelnet
     # number 1->6 inclusive
     # save command: store
     def preset(number, command = :recall)
-        send "camera preset #{command} #{number}\r", name: :preset
+        if number.is_a? String
+            name = number.to_sym
+            preset = @presets[name]
+            if preset
+                send "camera preset #{command} #{preset}\r", name: :preset
+            elsif name == :default
+                home
+            else
+                send "camera preset #{command} #{number}\r", name: :preset
+            end
+        else
+            send "camera preset #{command} #{number}\r", name: :preset
+        end
     end
 
     # direction: in, out, stop
