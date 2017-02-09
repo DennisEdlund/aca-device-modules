@@ -48,6 +48,8 @@ class Extron::Switcher::UsbExtenderPlus < Extron::Base
         if receiver
             unpair_all
 
+            logger.debug { "unpaired all inputs\nswitching to #{input} - #{receiver[0]}:#{receiver[1]}" }
+
             # pair just this receiver to this transmitter
             to_host = hex_to_byte("2f03f4a2020000000302#{receiver[1]}")
             thread.udp_service.send(@host_ip, @port, to_host)
@@ -62,12 +64,17 @@ class Extron::Switcher::UsbExtenderPlus < Extron::Base
     def switch(map)
         unpair_all
 
+        logger.debug { "unpaired all inputs" }
+
         map.each do |_, outputs|
             outputs = Array(outputs)
 
             outputs.each do |input|
                 receiver = input.is_a?(Integer) ? @lookup[input] : self[:receivers][input.to_sym]
                 if receiver
+
+                    logger.debug { "switching to #{input} - #{receiver[0]}:#{receiver[1]}" }
+
                     # pair this receiver to this transmitter
                     to_host = hex_to_byte("2f03f4a2020000000302#{receiver[1]}")
                     thread.udp_service.send(@host_ip, @port, to_host)
