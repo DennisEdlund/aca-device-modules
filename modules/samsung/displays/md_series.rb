@@ -47,12 +47,15 @@ DESC
 
     def on_update
         @id = setting(:display_id) || 0xFF
+        do_device_config if self[:connected]
     end
 
 
     #
     # network events
     def connected
+        do_device_config
+
         do_poll
 
         @polling_timer = schedule.every('30s') do
@@ -76,7 +79,7 @@ DESC
     # Command types
     COMMAND = {
         :hard_off => 0x11,      # Completely powers off
-        :power => 0xF9,         # Technically the panel command
+        :panel_mute => 0xF9,    # Screen blanking / visual mute
         :volume => 0x12,
         :input => 0x14,
         :mode => 0x18,
@@ -87,7 +90,10 @@ DESC
         :safety => 0x5D,
         :wall_on => 0x84,       # Video wall enabled
         :wall_user => 0x89,     # Video wall user control
-        :speaker => 0x68
+        :speaker => 0x68,
+        :net_standby => 0xB5,   # Keep NIC active in standby
+        :eco_solution => 0xE6,  # Eco options (auto power off)
+        :auto_power => 0x33
     }
     COMMAND.merge!(COMMAND.invert)
 
@@ -103,12 +109,12 @@ DESC
             #        switch_to blank
             #    end
             #end
-            do_send(:power, 1)
+            do_send(:panel_mute, 1)
         elsif !self[:connected]
             wake(broadcast)
         else
             do_send(:hard_off, 1)
-            do_send(:power, 0)
+            do_send(:panel_mute, 0)
         end
     end
 
@@ -123,7 +129,7 @@ DESC
 
     def power?(options = {}, &block)
         options[:emit] = block unless block.nil?
-        do_send(:power, [], options)
+        do_send(:panel_mute, [], options)
     end
 
 
@@ -204,7 +210,47 @@ DESC
     end
 
 
+    #
+    # Enable power on (without WOL)
+    def network_standby(enable, options = {})
+        state = is_affirmative?(enable) ? 1 : 0
+        do_send(:net_standby, state, options)
+    end
+
+
+    #
+    # Eco auto power off timer
+    def auto_off_timer(enable, options = {})
+        state = is_affirmative?(enable) ? 1 : 0
+        do_send(:eco_solution, [0x81, state], options)
+    end
+
+
+    #
+    # Device auto power control (presumably signal based?)
+    def auto_power(enable, options = {})
+        state = is_affirmative?(enable) ? 1 : 0
+        do_send(:auto_power, state, options)
+    end
+
+
     protected
+
+
+    Device_settings = [
+        :network_standby,
+        :auto_off_timer,
+        :auto_power
+    ]
+    #
+    # Push any configured device settings
+    def do_device_config
+        logger.debug { "Syncronising device state with settings" }
+        Device_settings.each do |name|
+            value = setting(name)
+            send(name, value) unless value.nil?
+        end
+    end
 
 
     def wake(broadcast = nil)
@@ -233,7 +279,7 @@ DESC
 
             if status == 0x41 # 'A'
                 case COMMAND[command]
-                when :power
+                when :panel_mute
                     self[:power] = value == 0
                 when :volume
                     self[:volume] = value
