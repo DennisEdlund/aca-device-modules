@@ -56,6 +56,7 @@ class Aca::MeetingRoom < Aca::Joiner
             else
                 @modes = nil
                 self[:modes] = nil
+                self[:current_mode] = nil
             end
 
             # We don't want to break things on update if inputs define audio settings
@@ -315,6 +316,7 @@ class Aca::MeetingRoom < Aca::Joiner
             # Update 
             self[:outputs] = ActiveSupport::HashWithIndifferentAccess.new.deep_merge(mode[:outputs])
             @original_outputs = self[:outputs].deep_dup
+            self[:current_mode] = mode
             powerup
         else
             logger.warn "unabled to find mode #{mode} -- bad request?"
@@ -600,7 +602,11 @@ class Aca::MeetingRoom < Aca::Joiner
         end
 
         # Perform the primary switch
-        system[:Switcher].switch({source[:input] => vc[:content]})
+        if vc[:video_content_only]
+            system[:Switcher].switch_video({source[:input] => vc[:content]})
+        else
+            system[:Switcher].switch({source[:input] => vc[:content]})
+        end
 
         # So we can keep the UI in sync
         self[:vc_content_source] = inp
