@@ -46,6 +46,17 @@ class Aca::MeetingRoom < Aca::Joiner
 
             # Grab the list of inputs and outputs
             self[:sources] = setting(:sources)
+            modes = setting(:modes)
+            if modes
+                @modes = {}
+                modes.each do |mode|
+                    @modes[mode[:name]] = mode
+                end
+                self[:modes] = @modes.keys
+            else
+                @modes = nil
+                self[:modes] = nil
+            end
 
             # We don't want to break things on update if inputs define audio settings
             # and there is a presentation currently
@@ -292,6 +303,21 @@ class Aca::MeetingRoom < Aca::Joiner
 
                 system[:Mixer].fader(mixer_id, val, mixer_index)
             end
+        end
+    end
+
+
+    def switch_mode(mode)
+        return unless @modes
+        
+        mode = @modes[mode.to_s]
+        if mode
+            # Update 
+            self[:outputs] = ActiveSupport::HashWithIndifferentAccess.new.deep_merge(mode[:outputs])
+            @original_outputs = self[:outputs].deep_dup
+            powerup
+        else
+            logger.warn "unabled to find mode #{mode} -- bad request?"
         end
     end
 
