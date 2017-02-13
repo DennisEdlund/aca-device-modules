@@ -48,10 +48,7 @@ class Aca::MeetingRoom < Aca::Joiner
             self[:sources] = setting(:sources)
             modes = setting(:modes)
             if modes
-                @modes = {}
-                modes.each do |mode|
-                    @modes[mode[:name]] = mode
-                end
+                @modes = modes
                 self[:modes] = setting(:ignore_modes) ? nil : @modes.keys
             else
                 @modes = nil
