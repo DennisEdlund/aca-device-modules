@@ -324,7 +324,7 @@ class Aca::MeetingRoom < Aca::Joiner
 
                 if inp
                     if mode[input]
-                        self[input] = ActiveSupport::HashWithIndifferentAccess.new.deep_merge(inp.merge(mode[input]))
+                        self[input] = Set.new(inp + mode[input]).to_a
                         (self[input] || []).each do |source|
                             @input_tab_mapping[source.to_sym] = input
                         end
