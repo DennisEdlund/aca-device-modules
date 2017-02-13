@@ -314,7 +314,7 @@ class Aca::MeetingRoom < Aca::Joiner
         mode = @modes[mode.to_s]
         if mode
             # Update the outputs
-            self[:outputs] = ActiveSupport::HashWithIndifferentAccess.new.deep_merge(mode[:outputs])
+            self[:outputs] = ActiveSupport::HashWithIndifferentAccess.new.deep_merge((mode[:outputs] || {}).merge(setting(:outputs) || {}))
             @original_outputs = self[:outputs].deep_dup
             self[:current_mode] = mode
 
