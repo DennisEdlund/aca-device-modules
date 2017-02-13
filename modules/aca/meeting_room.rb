@@ -309,6 +309,8 @@ class Aca::MeetingRoom < Aca::Joiner
 
 
     def switch_mode(mode)
+        logger.debug { "switch mode called for #{mode} -- #{!!@modes}" }
+
         return unless @modes
 
         mode = @modes[mode.to_s]
