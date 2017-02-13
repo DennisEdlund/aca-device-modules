@@ -52,7 +52,7 @@ class Aca::MeetingRoom < Aca::Joiner
                 modes.each do |mode|
                     @modes[mode[:name]] = mode
                 end
-                self[:modes] = @modes.keys
+                self[:modes] = setting(:ignore_modes) ? nil : @modes.keys
             else
                 @modes = nil
                 self[:modes] = nil
@@ -310,14 +310,39 @@ class Aca::MeetingRoom < Aca::Joiner
 
     def switch_mode(mode)
         return unless @modes
-        
+
         mode = @modes[mode.to_s]
         if mode
-            # Update 
+            # Update the outputs
             self[:outputs] = ActiveSupport::HashWithIndifferentAccess.new.deep_merge(mode[:outputs])
             @original_outputs = self[:outputs].deep_dup
             self[:current_mode] = mode
-            powerup
+
+            # Update the inputs
+            inps = (setting(:inputs) + (mode[:inputs] || [])) - (mode[:remove_inputs] || [])
+            inps.each do |input|
+                inp = setting(input) || mode[input]
+
+                if inp
+                    if mode[input]
+                        self[input] = ActiveSupport::HashWithIndifferentAccess.new.deep_merge(inp.merge(mode[input]))
+                        (self[input] || []).each do |source|
+                            @input_tab_mapping[source.to_sym] = input
+                        end
+                    end
+                end
+            end
+            self[:inputs] = inps
+
+            # Power on the system and apply any custom presets
+            begin
+                powerup unless setting(:ignore_modes)
+            ensure
+                sys = system
+                sys[:Mixer].trigger(mode[:audio_preset]) if mode[:audio_preset]
+                sys[:Switcher].switch(mode[:routes]) if mode[:routes]
+                sys[:Lighting].trigger(@light_group, mode[:light_preset]) if mode[:light_preset]
+            end
         else
             logger.warn "unabled to find mode #{mode} -- bad request?"
         end
@@ -330,6 +355,8 @@ class Aca::MeetingRoom < Aca::Joiner
     #
 
     def powerup
+        switch_mode(@defaults[:default_mode]) if @defaults[:default_mode]
+
         # Keep track of displays from neighboring rooms
         @setCamDefaults = true
 
@@ -664,6 +691,8 @@ class Aca::MeetingRoom < Aca::Joiner
     # POD SHARING (assumes single output)
     # -----------
     def do_share(value, source = nil)
+        return if setting(:ignore_joining)
+
         if self[:sources][:sharing_input].nil? && source && self[:sources][source]
             disp_source = self[:sources][source]
             self[:Presenter_hide] = false # Just in case
@@ -698,7 +727,13 @@ class Aca::MeetingRoom < Aca::Joiner
 
     def enable_sharing(value)
         self[:Presenter_hide] = @always_share ? false : !value
-        do_share(false) if value == false
+
+        if value == false
+            switch_mode(@defaults[:default_mode]) if @defaults[:default_mode]
+            do_share(false)
+        else
+            switch_mode(@defaults[:on_sharing_mode]) if @defaults[:on_sharing_mode]
+        end
     end
 
 
