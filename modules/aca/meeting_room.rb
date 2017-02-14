@@ -604,8 +604,12 @@ class Aca::MeetingRoom < Aca::Joiner
         end
     end
 
-    def select_camera(input)
-        system[:VidConf].select_camera(input)
+    def select_camera(input, output = nil)
+        if output
+            system[:Switcher].switch({input => output})
+        else
+            system[:VidConf].select_camera(input)
+        end
     end
 
     def vc_content(outp, inp)
