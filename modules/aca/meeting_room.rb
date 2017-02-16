@@ -44,6 +44,11 @@ class Aca::MeetingRoom < Aca::Joiner
             # {Display_1: {module: VidWall, input: display_port} }
             @vidwalls = setting(:vidwalls) || {}
 
+            # We don't want to break things on update if inputs define audio settings
+            # and there is a presentation currently
+            @original_outputs = setting(:outputs)
+            self[:outputs] = ActiveSupport::HashWithIndifferentAccess.new.deep_merge(@original_outputs)
+
             # Grab the list of inputs and outputs
             self[:sources] = setting(:sources)
             modes = setting(:modes)
@@ -56,11 +61,6 @@ class Aca::MeetingRoom < Aca::Joiner
                 self[:modes] = nil
                 self[:current_mode] = nil
             end
-
-            # We don't want to break things on update if inputs define audio settings
-            # and there is a presentation currently
-            @original_outputs = setting(:outputs)
-            self[:outputs] = ActiveSupport::HashWithIndifferentAccess.new.deep_merge(@original_outputs)
 
             self[:mics] = setting(:mics)
             @sharing_output = self[:outputs].keys.first
