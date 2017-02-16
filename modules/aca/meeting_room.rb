@@ -50,6 +50,7 @@ class Aca::MeetingRoom < Aca::Joiner
             if modes
                 @modes = modes
                 self[:modes] = setting(:ignore_modes) ? nil : @modes.keys
+                switch_mode(self[:current_mode]) if self[:current_mode]
             else
                 @modes = nil
                 self[:modes] = nil
@@ -59,7 +60,7 @@ class Aca::MeetingRoom < Aca::Joiner
             # We don't want to break things on update if inputs define audio settings
             # and there is a presentation currently
             @original_outputs = setting(:outputs)
-            self[:outputs] = (self[:outputs] || ActiveSupport::HashWithIndifferentAccess.new).deep_merge(@original_outputs)
+            self[:outputs] = ActiveSupport::HashWithIndifferentAccess.new.deep_merge(@original_outputs)
 
             self[:mics] = setting(:mics)
             @sharing_output = self[:outputs].keys.first
@@ -341,6 +342,7 @@ class Aca::MeetingRoom < Aca::Joiner
                 sys[:Mixer].trigger(mode[:audio_preset]) if mode[:audio_preset]
                 sys[:Switcher].switch(mode[:routes]) if mode[:routes]
                 sys[:Lighting].trigger(@light_group, mode[:light_preset]) if mode[:light_preset]
+                sys[:VideoWall].preset(mode[:videowall_preset]) if mode[:videowall_preset]
             end
         else
             logger.warn "unabled to find mode #{mode} -- bad request?"
