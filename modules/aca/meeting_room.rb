@@ -306,17 +306,17 @@ class Aca::MeetingRoom < Aca::Joiner
     end
 
 
-    def switch_mode(mode)
-        logger.debug { "switch mode called for #{mode} -- #{!!@modes}" }
+    def switch_mode(mode_name)
+        logger.debug { "switch mode called for #{mode_name} -- #{!!@modes}" }
 
         return unless @modes
 
-        mode = @modes[mode.to_s]
+        mode = @modes[mode_name.to_s]
         if mode
             # Update the outputs
             self[:outputs] = ActiveSupport::HashWithIndifferentAccess.new.deep_merge((mode[:outputs] || {}).merge(setting(:outputs) || {}))
             @original_outputs = self[:outputs].deep_dup
-            self[:current_mode] = mode
+            self[:current_mode] = mode_name
 
             # Update the inputs
             inps = (setting(:inputs) + (mode[:inputs] || [])) - (mode[:remove_inputs] || [])
@@ -345,7 +345,7 @@ class Aca::MeetingRoom < Aca::Joiner
                 sys[:VideoWall].preset(mode[:videowall_preset]) if mode[:videowall_preset]
             end
         else
-            logger.warn "unabled to find mode #{mode} -- bad request?"
+            logger.warn "unabled to find mode #{mode_name} -- bad request?"
         end
     end
 
