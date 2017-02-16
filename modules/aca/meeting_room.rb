@@ -479,6 +479,8 @@ class Aca::MeetingRoom < Aca::Joiner
             @lights_set = false
         end
 
+        switch_mode(@defaults[:shutdown_mode]) if @defaults[:shutdown_mode]
+
         mixer = system[:Mixer]
 
         # Unroutes
