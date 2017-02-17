@@ -119,10 +119,11 @@ class Aca::MeetingRoom < Aca::Joiner
 =end
             self[:blinds] = setting(:blinds)
 
-            # Get any default settings
-            @defaults = setting(:defaults) || {}
         rescue => e
             logger.print_error(e, 'bad system logic configuration')
+        ensure
+            # Get any default settings
+            @defaults = setting(:defaults) || {}
         end
 
         # Update the Schedules
