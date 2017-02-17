@@ -52,10 +52,10 @@ class Toshiba::Display::ESeries
     def power(state)
         promise = if is_affirmative?(state)
             self[:power_target] = self[:power] = true
-            do_send([0x19, 0xD3, 0x02, 0x00, 0x00, 0x60, 0x02, 0x00], name: :power)
+            do_send([0x6B, 0xD9, 0x01, 0x00, 0x20, 0x30, 0x01, 0x00], name: :power)
         else
             self[:power_target] = self[:power] = false
-            do_send([0x19, 0xD3, 0x02, 0x00, 0x00, 0x60, 0x01, 0x00], name: :power)
+            do_send([0xFB, 0xD8, 0x01, 0x00, 0x20, 0x30, 0x00, 0x00], name: :power)
         end
 
         define_setting(:power_target, self[:power_target]) if @force_state
@@ -65,7 +65,7 @@ class Toshiba::Display::ESeries
     def power?(options = {}, &block)
         options[:emit] = block if block_given?
         options[:name] = :power_query
-        do_send([0x19, 0xD8, 0x03, 0x00, 0x00, 0x60, 0x07, 0x00], options)
+        do_send([0xC8, 0xD8, 0x02, 0x00, 0x20, 0x30, 0x00, 0x00], options)
     end
 
     INPUTS = {
@@ -231,7 +231,7 @@ class Toshiba::Display::ESeries
                     :unknown
                 end
             when :power_query
-                self[:power] = data != "\x1D\0\0"
+                self[:power] = data == "\x1D\0\1"
             end
         end
 
