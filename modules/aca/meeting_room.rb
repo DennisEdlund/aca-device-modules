@@ -797,7 +797,7 @@ class Aca::MeetingRoom < Aca::Joiner
 
         # We might not actually want to switch anything (support tab)
         # Especially if the room only as a single display (switch on tab select)
-        return if disp_source[:ignore]
+        return if disp_source[:ignore] && !disp_source[:server_only_source]
 
         self[:vol_max] = disp_source[:vol_max] || @original_max
         self[:vol_min] = disp_source[:vol_min] || @original_min
