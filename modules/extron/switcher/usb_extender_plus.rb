@@ -94,6 +94,14 @@ class Extron::Switcher::UsbExtenderPlus < Extron::Base
         end
     end
 
+    def unpair(receiver)
+        to_host = hex_to_byte("2f03f4a2020000000303#{receiver[1]}")
+        thread.udp_service.send(@host_ip, @port, to_host)
+
+        to_device = hex_to_byte("2f03f4a2020000000303#{@mac_address}")
+        thread.udp_service.send(receiver[0], receiver[2] || @port, to_device)
+    end
+
 
     def keyboard_emulation(enable)
         val = is_affirmative?(enable) ? 1 : 0
