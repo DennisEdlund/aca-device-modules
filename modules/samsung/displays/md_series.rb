@@ -132,6 +132,16 @@ DESC
         do_send(:panel_mute, [], options)
     end
 
+    # Adds mute states compatible with projectors
+    def mute(state = true)
+        should_mute = is_affirmative?(state)
+        power(!should_mute)
+    end
+
+    def unmute
+        power(true)
+    end
+
 
     INPUTS = {
         :vga => 0x14,       # pc in manual
