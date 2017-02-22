@@ -638,6 +638,7 @@ class Aca::MeetingRoom < Aca::Joiner
 
         # Perform the primary switch
         if vc[:video_content_only]
+            system[:Switcher].switch_audio({0 => vc[:content]})
             system[:Switcher].switch_video({source[:input] => vc[:content]})
         else
             system[:Switcher].switch({source[:input] => vc[:content]})
