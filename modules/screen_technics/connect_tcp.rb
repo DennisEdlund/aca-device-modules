@@ -72,7 +72,8 @@ class ScreenTechnics::ConnectTcp
     def stop(index = 1, emergency = false)
         options = {
             name: :stop,
-            priority: 99
+            priority: 99,
+            delay_on_receive: 500
         }
         options[:clear_queue] = :true if emergency
 
@@ -136,10 +137,10 @@ class ScreenTechnics::ConnectTcp
         end
     end
 
-    def do_send(cmd, index = 1, value = nil, **options)
+    def do_send(cmd, index = 1, *args, **options)
         address = index + 16
-        parts = [Commands[cmd], address]
-        parts << value unless value.nil?
+        options.merge!(args.pop) if args[-1].is_a? Hash
+        parts = [Commands[cmd], address] + args
         send "#{parts.join(', ')}\r\n", options
     end
 end
