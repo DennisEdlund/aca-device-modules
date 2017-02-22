@@ -54,9 +54,11 @@ class Extron::Switcher::UsbExtenderPlus < Extron::Base
                 # pair just this receiver to this transmitter
                 to_host = hex_to_byte("2f03f4a2020000000302#{receiver[1]}")
                 thread.udp_service.send(@host_ip, @port, to_host)
+                logger.debug { "pair desk: \"#{@host_ip}\", \"#{byte_to_hex(to_host)}\"" }
 
                 to_device = hex_to_byte("2f03f4a2020000000302#{@mac_address}")
                 thread.udp_service.send(receiver[0], receiver[2] || @port, to_device)
+                logger.debug { "pair disp: \"#{receiver[0]}\", \"#{byte_to_hex(to_device)}\"" }
             end
         else
             logger.warn("#{input} receiver not found")
@@ -206,9 +208,11 @@ class Extron::Switcher::UsbExtenderPlus < Extron::Base
 
         to_host = hex_to_byte("2f03f4a2020000000303#{receiver[1]}")
         thread.udp_service.send(@host_ip, @port, to_host)
+        logger.debug { "unpair desk: \"#{@host_ip}\", \"#{byte_to_hex(to_host)}\"" }
 
         to_device = hex_to_byte("2f03f4a2020000000303#{@mac_address}")
         thread.udp_service.send(receiver[0], receiver[2] || @port, to_device)
+        logger.debug { "unpair disp: \"#{receiver[0]}\", \"#{byte_to_hex(to_device)}\"" }
 
         devices = @unpair.dup
         unpair_proc = proc {
@@ -219,6 +223,7 @@ class Extron::Switcher::UsbExtenderPlus < Extron::Base
                 schedule.in(100) do
                     to_device = hex_to_byte("2f03f4a2020000000303#{mac}")
                     thread.udp_service.send(receiver[0], receiver[2] || @port, to_device)
+                    logger.debug { "unpair disp: \"#{receiver[0]}\", \"#{byte_to_hex(to_device)}\"" }
                     unpair_proc.call
                 end
             end
