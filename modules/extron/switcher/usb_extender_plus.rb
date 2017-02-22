@@ -33,7 +33,7 @@ class Extron::Switcher::UsbExtenderPlus < Extron::Base
         @disable_polling = @__config__.settings.udp
 
         # The transmitter is the computer / host
-        @mac_address = setting(:mac_address)
+        @mac_address = setting(:mac_address).downcase
         @host_ip = remote_address
         @port = setting(:pair_port) || 6137
         @unpair = Array(setting(:unpair))
@@ -42,65 +42,44 @@ class Extron::Switcher::UsbExtenderPlus < Extron::Base
         # { "location name": ["ip", "mac_address", port] } # port is optional
         self[:receivers] = setting(:receivers) || {}
         @lookup = self[:receivers].values
+
+        @lookup.each do |dev|
+            dev[1] = dev[1].downcase
+        end
+        @unpair.map! { |mac| mac.downcase }
     end
 
 
     def switch_to(input)
-        receiver = input.is_a?(Integer) ? @lookup[input] : self[:receivers][input.to_sym]
-        if receiver
-            unpair(receiver).then do
-                logger.debug { "switching to #{input} - #{receiver[0]}:#{receiver[1]}" }
+        device = input.is_a?(Integer) ? @lookup[input] : self[:receivers][input.to_sym]
 
-                # pair just this receiver to this transmitter
-                to_host = hex_to_byte("2f03f4a2020000000302#{receiver[1]}")
-                thread.udp_service.send(@host_ip, @port, to_host)
-                logger.debug { "pair desk: \"#{@host_ip}\", \"#{byte_to_hex(to_host)}\"" }
+        if device
+            rec_mac = device[1]
+            query_join.then do
+                if self[:joined_to].include? rec_mac
+                    logger.debug { "device #{device[0]} already joined" }
+                else
+                    unpair(device)
+                    logger.debug { "pairing #{device[0]} to #{@host_ip}" }
+                    
+                    # pair just this device to this host
+                    to_host = hex_to_byte("2f03f4a2020000000302#{device[1]}")
+                    thread.udp_service.send(@host_ip, @port, to_host)
+                    logger.debug { "pair desk: \"#{@host_ip}\", \"#{byte_to_hex(to_host)}\"" }
 
-                to_device = hex_to_byte("2f03f4a2020000000302#{@mac_address}")
-                thread.udp_service.send(receiver[0], receiver[2] || @port, to_device)
-                logger.debug { "pair disp: \"#{receiver[0]}\", \"#{byte_to_hex(to_device)}\"" }
+                    to_device = hex_to_byte("2f03f4a2020000000302#{@mac_address}")
+                    thread.udp_service.send(device[0], device[2] || @port, to_device)
+                    logger.debug { "pair disp: \"#{receiver[0]}\", \"#{byte_to_hex(to_device)}\"" }
+                end
             end
         else
             logger.warn("#{input} receiver not found")
         end
     end
 
-    def switch(map)
-        unpair_all
-
-        logger.debug { "unpaired all inputs" }
-
-        map.each do |_, outputs|
-            outputs = Array(outputs)
-
-            outputs.each do |input|
-                receiver = input.is_a?(Integer) ? @lookup[input] : self[:receivers][input.to_sym]
-                if receiver
-
-                    logger.debug { "switching to #{input} - #{receiver[0]}:#{receiver[1]}" }
-
-                    # pair this receiver to this transmitter
-                    to_host = hex_to_byte("2f03f4a2020000000302#{receiver[1]}")
-                    thread.udp_service.send(@host_ip, @port, to_host)
-
-                    to_device = hex_to_byte("2f03f4a2020000000302#{@mac_address}")
-                    thread.udp_service.send(receiver[0], receiver[2] || @port, to_device)
-                else
-                    logger.warn("#{input} receiver not found")
-                end
-            end
-        end
-    end
-
-    def unpair_all
-        @lookup.each do |receiver|
-            unpair(receiver)
-        end
-    end
-
 
     def query_join
-        send('2f03f4a2000000000300', hex_string: true)
+        send('2f03f4a2000000000300', hex_string: true, name: :join_query)
     end
 
 
@@ -120,9 +99,9 @@ class Extron::Switcher::UsbExtenderPlus < Extron::Base
         logger.debug { "Extron USB sent #{resp}" }
 
         if resp[0..21] == '2f03f4a200000000030100'
-            mac = resp[22..-1]
-            logger.debug { "Extron USB responded with MAC: #{mac}" }
-            self[:last_join] = mac.empty? ? nil : mac
+            macs = resp[22..-1].scan(/.{12}/)
+            logger.debug { "Extron USB joined with: #{macs}" }
+            self[:joined_to] = macs
         elsif resp == '2f03f4a2010000000003'
             logger.debug 'Extron USB responded to UDP ping'
         else
@@ -203,33 +182,16 @@ class Extron::Switcher::UsbExtenderPlus < Extron::Base
     protected
 
 
-    def unpair(receiver)
-        defer = thread.defer
 
-        to_host = hex_to_byte("2f03f4a2020000000303#{receiver[1]}")
-        thread.udp_service.send(@host_ip, @port, to_host)
-        logger.debug { "unpair desk: \"#{@host_ip}\", \"#{byte_to_hex(to_host)}\"" }
+    def unpair(device)
+        @unpair.each do |host|
+            to_host = hex_to_byte("2f03f4a2020000000303#{device[1]}")
+            thread.udp_service.send(host[0], host[2] || @port, to_host)
+            logger.debug { "unpair host #{host[0]} from #{device[0]}" }
 
-        to_device = hex_to_byte("2f03f4a2020000000303#{@mac_address}")
-        thread.udp_service.send(receiver[0], receiver[2] || @port, to_device)
-        logger.debug { "unpair disp: \"#{receiver[0]}\", \"#{byte_to_hex(to_device)}\"" }
-
-        devices = @unpair.dup
-        unpair_proc = proc {
-            mac = devices.pop
-            if mac.nil?
-                defer.resolve true
-            else
-                schedule.in(100) do
-                    to_device = hex_to_byte("2f03f4a2020000000303#{mac}")
-                    thread.udp_service.send(receiver[0], receiver[2] || @port, to_device)
-                    logger.debug { "unpair disp: \"#{receiver[0]}\", \"#{byte_to_hex(to_device)}\"" }
-                    unpair_proc.call
-                end
-            end
-        }
-        unpair_proc.call
-
-        defer.promise
+            to_device = hex_to_byte("2f03f4a2020000000303#{host[1]}")
+            thread.udp_service.send(device[0], device[2] || @port, to_device)
+            logger.debug { "unpair device #{device[0]} from #{host[0]}" }
+        end
     end
 end
