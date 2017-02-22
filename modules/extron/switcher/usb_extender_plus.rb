@@ -19,9 +19,10 @@ module Extron::Switcher; end
 
 class Extron::Switcher::UsbExtenderPlus < Extron::Base
     # Discovery Information
-    tcp_port 23
+    udp_port 6137
     descriptive_name 'Extron USB Extender Plus'
     generic_name :Switcher
+    delay between_sends: 100
 
 
     def on_load
@@ -47,16 +48,16 @@ class Extron::Switcher::UsbExtenderPlus < Extron::Base
     def switch_to(input)
         receiver = input.is_a?(Integer) ? @lookup[input] : self[:receivers][input.to_sym]
         if receiver
-            unpair(receiver)
+            unpair(receiver).then do
+                logger.debug { "switching to #{input} - #{receiver[0]}:#{receiver[1]}" }
 
-            logger.debug { "switching to #{input} - #{receiver[0]}:#{receiver[1]}" }
+                # pair just this receiver to this transmitter
+                to_host = hex_to_byte("2f03f4a2020000000302#{receiver[1]}")
+                thread.udp_service.send(@host_ip, @port, to_host)
 
-            # pair just this receiver to this transmitter
-            to_host = hex_to_byte("2f03f4a2020000000302#{receiver[1]}")
-            thread.udp_service.send(@host_ip, @port, to_host)
-
-            to_device = hex_to_byte("2f03f4a2020000000302#{@mac_address}")
-            thread.udp_service.send(receiver[0], receiver[2] || @port, to_device)
+                to_device = hex_to_byte("2f03f4a2020000000302#{@mac_address}")
+                thread.udp_service.send(receiver[0], receiver[2] || @port, to_device)
+            end
         else
             logger.warn("#{input} receiver not found")
         end
@@ -95,19 +96,43 @@ class Extron::Switcher::UsbExtenderPlus < Extron::Base
         end
     end
 
-    def unpair(receiver)
-        to_host = hex_to_byte("2f03f4a2020000000303#{receiver[1]}")
-        thread.udp_service.send(@host_ip, @port, to_host)
 
-        to_device = hex_to_byte("2f03f4a2020000000303#{@mac_address}")
-        thread.udp_service.send(receiver[0], receiver[2] || @port, to_device)
-
-        @unpair.each do |mac|
-            to_device = hex_to_byte("2f03f4a2020000000303#{mac}")
-            thread.udp_service.send(receiver[0], receiver[2] || @port, to_device)
-        end
+    def query_join
+        send('2f03f4a2000000000300', hex_string: true)
     end
 
+
+    def ping_device
+        send('2f03f4a2010000000002', hex_string: true)
+    end
+
+
+    def send_hex(ip, hex_string)
+        thread.udp_service.send(ip, @port, hex_to_byte(hex_string))
+    end
+
+
+    def received(data, resolve, command)
+        resp = byte_to_hex(data)
+
+        logger.debug { "Extron USB sent #{resp}" }
+
+        if resp[0..21] == '2f03f4a200000000030100'
+            mac = resp[22..-1]
+            logger.debug { "Extron USB responded with MAC: #{mac}" }
+            self[:last_join] = mac.empty? ? nil : mac
+        elsif resp == '2f03f4a2010000000003'
+            logger.debug 'Extron USB responded to UDP ping'
+        else
+            logger.debug 'Unknown response'
+        end
+
+        :success
+    end
+
+=begin
+
+    # These methods are for RS232 comms only...
 
     def keyboard_emulation(enable)
         val = is_affirmative?(enable) ? 1 : 0
@@ -165,12 +190,41 @@ class Extron::Switcher::UsbExtenderPlus < Extron::Base
         return :success
     end
 
+    def device_ready
+        do_send("\e3CV", :wait => true)    # Verbose mode and tagged responses
+        network_pairing(true)
+    end
+
+=end
+
 
     protected
 
 
-    def device_ready
-        do_send("\e3CV", :wait => true)    # Verbose mode and tagged responses
-        network_pairing(true)
+    def unpair(receiver)
+        defer = thread.defer
+
+        to_host = hex_to_byte("2f03f4a2020000000303#{receiver[1]}")
+        thread.udp_service.send(@host_ip, @port, to_host)
+
+        to_device = hex_to_byte("2f03f4a2020000000303#{@mac_address}")
+        thread.udp_service.send(receiver[0], receiver[2] || @port, to_device)
+
+        devices = @unpair.dup
+        unpair_proc = proc {
+            mac = devices.pop
+            if mac.nil?
+                defer.resolve true
+            else
+                schedule.in(100) do
+                    to_device = hex_to_byte("2f03f4a2020000000303#{mac}")
+                    thread.udp_service.send(receiver[0], receiver[2] || @port, to_device)
+                    unpair_proc.call
+                end
+            end
+        }
+        unpair_proc.call
+
+        defer.promise
     end
 end
