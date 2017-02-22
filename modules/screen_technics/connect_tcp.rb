@@ -58,15 +58,27 @@ class ScreenTechnics::ConnectTcp
     end
 
     def down(index = 1)
+        return if down?
         stop(index)
         do_send :down, index, name: :direction
         query_state(index)
     end
 
+    def down?(index = 1)
+        down_states = [:moving_bottom, :at_bottom]
+        down_states.include?(self[:"screen#{index}"])
+    end
+
     def up(index = 1)
+        return if up?
         stop(index)
         do_send :up, index, name: :direction
         query_state(index)
+    end
+
+    def up?(index = 1)
+        up_states = [:moving_top, :at_top]
+        up_states.include?(self[:"screen#{index}"])
     end
 
     def stop(index = 1, emergency = false)
