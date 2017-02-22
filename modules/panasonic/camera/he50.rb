@@ -215,7 +215,7 @@ class Panasonic::Camera::He50
         if direction == 'right'
             speed += 20
         elsif direction == 'left'
-            speed -= 20
+            speed -= 25
         end
 
         joystick(speed, 0x50)
