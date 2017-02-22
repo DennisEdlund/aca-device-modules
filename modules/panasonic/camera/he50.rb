@@ -198,7 +198,7 @@ class Panasonic::Camera::He50
     end
 
     def adjust_tilt(direction)
-        direction = actual_direction(dir)
+        direction = actual_direction(direction)
         speed = 0x50
         if direction == 'down'
             speed = 0x65
