@@ -343,6 +343,10 @@ class Aca::MeetingRoom < Aca::Joiner
                 sys[:Lighting].trigger(@light_group, mode[:light_preset]) if mode[:light_preset]
                 sys[:VideoWall].preset(mode[:videowall_preset]) if mode[:videowall_preset]
             end
+
+            self[:outputs].each_key do |display|
+                video_mute(display)
+            end
         else
             logger.warn "unabled to find mode #{mode_name} -- bad request?"
         end
