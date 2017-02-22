@@ -35,6 +35,7 @@ class Extron::Switcher::UsbExtenderPlus < Extron::Base
         @mac_address = setting(:mac_address)
         @host_ip = remote_address
         @port = setting(:pair_port) || 6137
+        @unpair = Array(setting(:unpair))
 
         # Receivers are the devices, like keyboards and mice
         # { "location name": ["ip", "mac_address", port] } # port is optional
@@ -100,6 +101,11 @@ class Extron::Switcher::UsbExtenderPlus < Extron::Base
 
         to_device = hex_to_byte("2f03f4a2020000000303#{@mac_address}")
         thread.udp_service.send(receiver[0], receiver[2] || @port, to_device)
+
+        @unpair.each do |mac|
+            to_device = hex_to_byte("2f03f4a2020000000303#{mac}")
+            thread.udp_service.send(receiver[0], receiver[2] || @port, to_device)
+        end
     end
 
 
