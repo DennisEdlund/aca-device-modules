@@ -138,7 +138,8 @@ class ScreenTechnics::ConnectTcp
 
     def do_send(cmd, index = 1, value = nil, **options)
         address = index + 16
-        parts = [Commands[cmd], address, value]
+        parts = [Commands[cmd], address]
+        parts << value unless value.nil?
         send "#{parts.join(', ')}\r\n", options
     end
 end
