@@ -631,7 +631,9 @@ class Aca::MeetingRoom < Aca::Joiner
 
         # Perform any subsource selection
         if source[:usb_output]
-            if system.exists? :USB_Switcher
+            if source[:usb_switcher]
+                system.get_implicit(source[:usb_switcher]).switch_to(source[:usb_output])
+            elsif system.exists? :USB_Switcher
                 system[:USB_Switcher].switch_to(source[:usb_output])
             end
         end
