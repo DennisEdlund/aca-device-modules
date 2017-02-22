@@ -14,7 +14,7 @@ class ScreenTechnics::ConnectTcp
     generic_name :Screen
 
     # Communication settings
-    delay between_sends: 120, on_receive: 120
+    delay between_sends: 500, on_receive: 120
     tcp_port 3001
     tokenize delimiter: "\r\n"
     clear_queue_on_disconnect!
@@ -72,8 +72,7 @@ class ScreenTechnics::ConnectTcp
     def stop(index = 1, emergency = false)
         options = {
             name: :stop,
-            priority: 99,
-            delay_on_receive: 500
+            priority: 99
         }
         options[:clear_queue] = :true if emergency
 
