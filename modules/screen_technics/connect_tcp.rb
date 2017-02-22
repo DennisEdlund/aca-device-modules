@@ -143,8 +143,10 @@ class ScreenTechnics::ConnectTcp
             when :status
                 self[:"screen#{index}"] = Status[parts[-1]]
             end
+            :success
         else
             logger.debug { "Unknown command #{parts[0]}" }
+            :abort
         end
     end
 end
