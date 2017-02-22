@@ -22,6 +22,9 @@ class Aca::MeetingRoom < Aca::Joiner
             self[:help_msg] = setting(:help_msg)
             self[:analytics] = setting(:analytics)
 
+            # Get any default settings
+            @defaults = setting(:defaults) || {}
+
             # Pod sharing settings
             @always_share = !!setting(:always_share)
             self[:Presenter_hide] = self[:Presenter_hide] ? !@always_share : false
@@ -121,9 +124,6 @@ class Aca::MeetingRoom < Aca::Joiner
 
         rescue => e
             logger.print_error(e, 'bad system logic configuration')
-        ensure
-            # Get any default settings
-            @defaults = setting(:defaults) || {}
         end
 
         # Update the Schedules
@@ -357,7 +357,7 @@ class Aca::MeetingRoom < Aca::Joiner
     #
 
     def powerup
-        switch_mode(@defaults[:default_mode]) if @defaults[:default_mode]
+        switch_mode(@defaults[:default_mode]) if @defaults && @defaults[:default_mode]
 
         # Keep track of displays from neighboring rooms
         @setCamDefaults = true
