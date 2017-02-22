@@ -198,12 +198,11 @@ class Panasonic::Camera::He50
     end
 
     def adjust_tilt(direction)
-        direction = actual_direction(direction)
         speed = 0x50
         if direction == 'down'
-            speed = 0x65
+            speed += 20
         elsif direction == 'up'
-            speed = 0x35
+            speed -= 20
         end
 
         joystick(0x50, speed)
@@ -212,9 +211,9 @@ class Panasonic::Camera::He50
     def adjust_pan(direction)
         speed = 0x50
         if direction == 'right'
-            speed = 0x65
+            speed += 20
         elsif direction == 'left'
-            speed = 0x35
+            speed -= 20
         end
 
         joystick(speed, 0x50)
@@ -391,19 +390,6 @@ class Panasonic::Camera::He50
     def notify_error(err, msg, cmd)
         cmd = cmd[:request]
         logger.warn "Camera error response: #{err} - #{msg} for #{cmd[:path]} #{cmd[:query]}"
-    end
-
-    def actual_direction(dir)
-        if @invert
-            case dir.to_s
-            when 'down' then 'up'
-            when 'up' then 'down'
-            else
-                nil
-            end
-        else
-            dir
-        end
     end
 end
 
