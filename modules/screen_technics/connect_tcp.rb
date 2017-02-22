@@ -23,7 +23,7 @@ class ScreenTechnics::ConnectTcp
     Commands = {
         up: 30,
         down: 33,
-        status: 1,
+        status: 1,  # this differs from the doc, but appears to work
         stop: 36
     }
     Commands.merge!(Commands.invert)
@@ -32,11 +32,11 @@ class ScreenTechnics::ConnectTcp
     def on_load
         on_update
     end
-    
+
     def on_update
         @count = setting(:screen_count) || 1
     end
-    
+
     def connected
         (1..@count).each { |index| query_state(index) }
         @polling_timer = schedule.every('15s') {
@@ -45,11 +45,10 @@ class ScreenTechnics::ConnectTcp
     end
 
     def disconnected
-        # Disconnected will be called before connect if initial connect fails
         @polling_timer.cancel unless @polling_timer.nil?
         @polling_timer = nil
     end
-    
+
     def state(new_state, index = 1)
         if is_affirmative?(new_state)
             down(index)
@@ -60,48 +59,35 @@ class ScreenTechnics::ConnectTcp
 
     def down(index = 1)
         stop(index)
-        down_only(index)
+        do_send :down, index, name: :direction
         query_state(index)
-    end
-
-    def down_only(index = 1)
-        index = relative_address(index)
-        send "#{Commands[:down]} #{index}\r\n", name: :direction
     end
 
     def up(index = 1)
         stop(index)
-        up_only(index)
+        do_send :up, index, name: :direction
         query_state(index)
-    end
-
-    def up_only(index = 1)
-        index = relative_address(index)
-        send "#{Commands[:up]} #{index}\r\n", name: :direction
     end
 
     def stop(index = 1, emergency = false)
-        actual = relative_address(index)
-        if emergency
-            send "#{Commands[:stop]} #{actual}\r\n", name: :stop, priority: 99, clear_queue: true
-        else
-            send "#{Commands[:stop]} #{actual}\r\n", name: :stop, priority: 99
-        end
+        options = {
+            name: :stop,
+            priority: 99
+        }
+        options[:clear_queue] = :true if emergency
+
+        do_send :stop, index, options
         query_state(index)
     end
 
+    STATUS_REGISTER = 0x20
     def query_state(index = 1)
-        index = relative_address(index)
-        send "#{Commands[:status]} #{index} #{32}\r\n"
+        do_send :status, index, STATUS_REGISTER
     end
 
 
     protected
 
-
-    def relative_address(index)
-        index + 16
-    end
 
     Status = {
         0 => :moving_top,
@@ -127,7 +113,7 @@ class ScreenTechnics::ConnectTcp
         logger.debug { "Screen sent #{data}" }
 
         # Builds an array of numbers from the returned string
-        parts = data.split(/,\s*/).map { |part| part.strip.to_i }
+        parts = data.split(/,/).map { |part| part.strip.to_i }
         cmd = Commands[parts[0] - 100]
 
         if cmd
@@ -143,8 +129,16 @@ class ScreenTechnics::ConnectTcp
             when :status
                 self[:"screen#{index}"] = Status[parts[-1]]
             end
+            :success
         else
             logger.debug { "Unknown command #{parts[0]}" }
+            :abort
         end
+    end
+
+    def do_send(cmd, index = 1, value = nil, **options)
+        address = index + 16
+        parts = [Commands[cmd], address, value]
+        send "#{parts.join(', ')}\r\n", options
     end
 end
