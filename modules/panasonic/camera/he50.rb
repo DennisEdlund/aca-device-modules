@@ -44,6 +44,8 @@ class Panasonic::Camera::He50
     end
 
     def on_update
+        self[:inverted] = @invert = setting(:invert) || false
+
         # {near: {zoom: val, pan: val, tilt: val}}
         @presets = setting(:presets) || {}
         self[:presets] = @presets.keys
@@ -153,8 +155,19 @@ class Panasonic::Camera::He50
 
         left_max = self[:joy_left]
         right_max = self[:joy_right]
-        pan_speed = in_range(pan_speed.to_i, right_max, left_max).to_s(16).upcase.rjust(2, '0')
-        tilt_speed = in_range(tilt_speed.to_i, right_max, left_max).to_s(16).upcase.rjust(2, '0')
+        pan_speed = pan_speed.to_i
+        tilt_speed = tilt_speed.to_i
+
+        if @invert && tilt_speed != 0x50
+            if tilt_speed < 0x50
+                tilt_speed = 0x50 + (0x50 - tilt_speed)
+            else
+                tilt_speed = 0x50 - (tilt_speed - 0x50)
+            end
+        end
+
+        pan_speed = in_range(pan_speed, right_max, left_max).to_s(16).upcase.rjust(2, '0')
+        tilt_speed = in_range(tilt_speed, right_max, left_max).to_s(16).upcase.rjust(2, '0')
 
         is_centered = false
         if pan_speed == '50' && tilt_speed == '50'
@@ -185,11 +198,12 @@ class Panasonic::Camera::He50
     end
 
     def adjust_tilt(direction)
+        direction = actual_direction(dir)
         speed = 0x50
         if direction == 'down'
-            speed = 0x75
+            speed = 0x65
         elsif direction == 'up'
-            speed = 0x25
+            speed = 0x35
         end
 
         joystick(0x50, speed)
@@ -198,9 +212,9 @@ class Panasonic::Camera::He50
     def adjust_pan(direction)
         speed = 0x50
         if direction == 'right'
-            speed = 0x75
+            speed = 0x65
         elsif direction == 'left'
-            speed = 0x25
+            speed = 0x35
         end
 
         joystick(speed, 0x50)
@@ -377,6 +391,19 @@ class Panasonic::Camera::He50
     def notify_error(err, msg, cmd)
         cmd = cmd[:request]
         logger.warn "Camera error response: #{err} - #{msg} for #{cmd[:path]} #{cmd[:query]}"
+    end
+
+    def actual_direction(dir)
+        if @invert
+            case dir.to_s
+            when 'down' then 'up'
+            when 'up' then 'down'
+            else
+                nil
+            end
+        else
+            dir
+        end
     end
 end
 
