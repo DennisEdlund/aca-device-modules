@@ -62,10 +62,10 @@ class Amx::Svsi::NSeriesEncoder
         logger.debug { "received #{data}" }
 
         property, value = data.split ':'
-        property.downcase!
+        property = property.downcase.to_sym
         parser = RESPONSE_PARSERS[property]
         unless parser.nil?
-            status = parser[:status_variable] || property.to_sym
+            status = parser[:status_variable] || property
             unless parser[:transform].nil?
                 value = parser[:transform].call(value)
             end

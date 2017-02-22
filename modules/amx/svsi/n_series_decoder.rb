@@ -67,13 +67,15 @@ class Amx::Svsi::NSeriesDecoder
     RESPONSE_PARSERS = {
         stream: {
             status_variable: :video,
-            transform: -> (x) { x.to_i }
+            transform: -> (x) { @stream = x.to_i }
         },
         streamaudio: {
             status_variable: :audio,
             transform: -> (x) do
                 stream_id = x.to_i
-                stream_id == 0 ? self[:video] : stream_id
+                # AFV comes from the device as stream 0
+                # remap to actual audio stream id for status
+                stream_id == 0 ? @stream : stream_id
             end
         },
         name: {
@@ -94,10 +96,10 @@ class Amx::Svsi::NSeriesDecoder
         logger.debug { "received #{data}" }
 
         property, value = data.split ':'
-        property.downcase!
+        property = property.downcase.to_sym
         parser = RESPONSE_PARSERS[property]
         unless parser.nil?
-            status = parser[:status_variable] || property.to_sym
+            status = parser[:status_variable] || property
             unless parser[:transform].nil?
                 value = parser[:transform].call(value)
             end
