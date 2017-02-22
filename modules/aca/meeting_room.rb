@@ -315,7 +315,11 @@ class Aca::MeetingRoom < Aca::Joiner
         mode = @modes[mode_name.to_s]
         if mode
             # Update the outputs
-            self[:outputs] = ActiveSupport::HashWithIndifferentAccess.new.deep_merge((mode[:outputs] || {}).merge(setting(:outputs) || {}))
+            default_outs = setting(:outputs) || {}
+            mode_outs = mode[:outputs] || {}
+            difference = mode_outs.keys - default_outs.keys
+
+            self[:outputs] = ActiveSupport::HashWithIndifferentAccess.new.deep_merge(mode_outs.merge(default_outs))
             @original_outputs = self[:outputs].deep_dup
             self[:current_mode] = mode_name
 
@@ -344,7 +348,7 @@ class Aca::MeetingRoom < Aca::Joiner
                 sys[:VideoWall].preset(mode[:videowall_preset]) if mode[:videowall_preset]
             end
 
-            self[:outputs].each_key do |display|
+            difference.each do |display|
                 video_mute(display)
             end
         else
