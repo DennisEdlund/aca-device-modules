@@ -121,18 +121,22 @@ class Extron::UsbExtenderPlus::VirtualSwitcher
 
 
     def perform_join(host, device)
-        device.unjoin_all
+        defer = thread.defer
 
+        device.unjoin_all
         schedule.in('1s') do
             device.join(host[:mac_address])
 
             # Check if already joined on this host
             unless host[:joined_to].include?(device[:mac_address])
                 schedule.in(100) do
+                    defer.resolve(true)
                     host.join(device[:mac_address])
                 end
             end
         end
+
+        defer.promise
     end
 
     # Enumerate the devices that make up this virtual switcher
