@@ -44,9 +44,9 @@ class Extron::UsbExtenderPlus::VirtualSwitcher
             # Make sure join information is up to date
             dev.query_joins
             host.query_joins
-        elsif dev
-            logger.warn "unable to switch - device #{device} not found!"
-        elsif host
+        elsif dev.nil?
+            logger.warn "unable to switch - device #{device} not found! (host: #{host.nil?})"
+        elsif host.nil?
             logger.warn "unable to switch - no USB hosts in system"
         end
     end
