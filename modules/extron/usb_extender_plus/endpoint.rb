@@ -26,7 +26,7 @@ class Extron::UsbExtenderPlus::Endpoint
     udp_port 6137
     descriptive_name 'Extron USB Extender Plus Endpoint'
     generic_name :USB_Device
-    delay between_sends: 200
+    delay between_sends: 500
 
 
     def on_load

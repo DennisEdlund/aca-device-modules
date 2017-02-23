@@ -93,8 +93,8 @@ class Extron::UsbExtenderPlus::VirtualSwitcher
             end
         end
 
-        device_joins.each { |endpoint| devices[endpoint].query_join }
-        host_joins.each { |endpoint| hosts[endpoint].query_join }
+        device_joins.each { |endpoint| devices[endpoint].query_joins }
+        host_joins.each { |endpoint| hosts[endpoint].query_joins }
     end
 
 
