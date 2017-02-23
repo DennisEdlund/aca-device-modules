@@ -26,7 +26,7 @@ class Extron::UsbExtenderPlus::Endpoint
     udp_port 6137
     descriptive_name 'Extron USB Extender Plus Endpoint'
     generic_name :USB_Device
-    delay between_sends: 100
+    delay between_sends: 200
 
 
     def on_load
@@ -39,10 +39,12 @@ class Extron::UsbExtenderPlus::Endpoint
         self[:ip] = remote_address
         self[:port] = remote_port
 
+        self[:location] = setting(:location)
+
         @polling_timer.cancel unless @polling_timer.nil?
         @polling_timer = schedule.every('120s') do
             logger.debug "-- polling extron USB device"
-            promise = ping
+            promise = query_joins
 
             # Manually set the connection state (UDP device)
             promise.then do
@@ -53,12 +55,15 @@ class Extron::UsbExtenderPlus::Endpoint
                 logger.warn "Extron USB Device Probably Offline: #{remote_address}\nUDP Ping failed."
             end
         end
+
+        query_joins
     end
 
 
     def query_joins
         promise = send('2f03f4a2000000000300', hex_string: true, name: :join_query)
         promise.catch do
+            set_connected_state(false) if self[:connected]
             logger.warn "Extron USB Device Probably Offline: #{remote_address}\nJoin query failed."
         end
         promise
@@ -79,6 +84,8 @@ class Extron::UsbExtenderPlus::Endpoint
             self[:joined_to].each do |mac|
                 send_unjoin(mac)
             end
+
+            query_joins
         end
     end
 
@@ -97,10 +104,16 @@ class Extron::UsbExtenderPlus::Endpoint
 
             if mac
                 send_unjoin(mac)
+                query_joins
             else
                 logger.debug { "not currently joined to #{from}" }
             end
         end
+    end
+
+    def join(mac)
+        logger.debug { "joining with #{mac}" }
+        send "2f03f4a2020000000302#{mac}", hex_string: true, wait: false
     end
 
 
@@ -116,7 +129,7 @@ class Extron::UsbExtenderPlus::Endpoint
         elsif resp == '2f03f4a2010000000003'
             logger.debug 'Extron USB responded to UDP ping'
         else
-            logger.debug 'Unknown response'
+            logger.info "Unknown response from extron: #{resp}"
         end
 
         :success
@@ -128,6 +141,6 @@ class Extron::UsbExtenderPlus::Endpoint
 
     def send_unjoin(mac)
         logger.debug { "unjoining from #{mac}" }
-        send hex_to_byte("2f03f4a2020000000303#{mac}"), wait: false
+        send "2f03f4a2020000000303#{mac}", hex_string: true, wait: false
     end
 end
