@@ -39,11 +39,13 @@ class Extron::UsbExtenderPlus::VirtualSwitcher
         host = system[:USB_Host]
 
         if dev && host
-            perform_join(host, dev)
+            promise = perform_join(host, dev)
 
             # Make sure join information is up to date
-            dev.query_joins
-            host.query_joins
+            promise.finally do
+                dev.query_joins
+                host.query_joins
+            end
         elsif dev.nil?
             logger.warn "unable to switch - device #{device} not found! (host: #{!host.nil?})"
         elsif host.nil?
@@ -57,6 +59,8 @@ class Extron::UsbExtenderPlus::VirtualSwitcher
 
         host_joins = Set.new
         device_joins = Set.new
+
+        wait = []
 
                   # input, outputs
         map.each do |host, devs|
@@ -82,7 +86,7 @@ class Extron::UsbExtenderPlus::VirtualSwitcher
                         device = devices[dev.to_s]
                         if device
                             device_joins << dev.to_s
-                            perform_join(host_actual, device)
+                            wait << perform_join(host_actual, device)
                         else
                             logger.warn "unable to switch - device #{dev} not found!"
                         end
@@ -93,8 +97,11 @@ class Extron::UsbExtenderPlus::VirtualSwitcher
             end
         end
 
-        device_joins.each { |endpoint| devices[endpoint].query_joins }
-        host_joins.each { |endpoint| hosts[endpoint].query_joins }
+        # Wait for the perform join to complete
+        thread.all(wait).finally do
+            device_joins.each { |endpoint| devices[endpoint].query_joins }
+            host_joins.each { |endpoint| hosts[endpoint].query_joins }
+        end
     end
 
 
@@ -102,13 +109,14 @@ class Extron::UsbExtenderPlus::VirtualSwitcher
 
 
     def perform_join(host, device)
-        # Check if already joined
+        device.unjoin_all
+
+        # Check if already joined on this host
         unless host[:joined_to].include?(device[:mac_address])
             host.join(device[:mac_address])
         end
 
-        unless device[:joined_to].include?(host[:mac_address])
-            device.unjoin_all
+        schedule.in('1s') do
             device.join(host[:mac_address])
         end
     end
