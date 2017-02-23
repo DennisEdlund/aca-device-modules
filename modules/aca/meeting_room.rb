@@ -56,23 +56,41 @@ class Aca::MeetingRoom < Aca::Joiner
             self[:sources] = setting(:sources)
             modes = setting(:modes)
             if modes
-                @modes = modes
+                @modes = {}
                 if setting(:ignore_modes)
                     self[:modes] = nil
                     self[:cog_modes] = nil
                 else
                     cogs = []
                     mods = []
-                    @modes.each do |mod|
-                        cogs << mod[:cog_label] if mod[:cog_label]
-                        mods << mod[:home_label] if mod[:home_label]
+
+                    modes.each do |key, mod|
+                        @modes[key] = mod
+
+                        if mod[:cog_label]
+                            @modes[mod[:cog_label]] = mod
+                            cogs << mod[:cog_label]
+                        end
+
+                        if mod[:home_label]
+                            @modes[mod[:home_label]] = mod
+                            mods << mod[:home_label]
+                        end
                     end
 
                     self[:modes] = mods
                     self[:cog_modes] = cogs
                 end
+
+                # Load the current mode from the database (in case of system crash)
                 self[:current_mode] = setting(:current_mode) unless self[:current_mode]
-                switch_mode(self[:current_mode]) if self[:current_mode]
+                if self[:current_mode]
+                    switch_mode(self[:current_mode])
+                    begin
+                        self[:current_cog_mode] = @modes[self[:current_mode]][:cog_label]
+                    rescue => e
+                    end
+                end
             else
                 @modes = nil
                 self[:modes] = nil
@@ -368,6 +386,7 @@ class Aca::MeetingRoom < Aca::Joiner
             self[:outputs] = ActiveSupport::HashWithIndifferentAccess.new.deep_merge(mode_outs.merge(default_outs))
             @original_outputs = self[:outputs].deep_dup
             self[:current_mode] = mode_name
+            self[:current_cog_mode] = mode[:cog_label]
             define_setting(:current_mode, self[:current_mode])
 
             # Update the inputs
