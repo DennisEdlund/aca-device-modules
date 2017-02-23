@@ -54,10 +54,20 @@ class Amx::Svsi::VirtualSwitcher
         decoders = get_system_modules(:Decoder)
 
         signal_map.each do |input, outputs|
-            encoder = encoders[input]
-            stream = encoder.nil? ? 0 : encoder[:stream_id]
+            if input == 0
+                stream = 0  # disconnect
+            else
+                encoder = encoders[input.to_s]
+                unless encoder.nil?
+                    stream = encoder[:stream_id]
+                else
+                    logger.warn "could not find decoder \"#{output}\""
+                    break
+                end
+            end
+
             [*outputs].each do |output|
-                decoder = decoders[output]
+                decoder = decoders[output.to_s]
                 unless decoder.nil?
                     connect_method.call(decoder, stream)
                 else
