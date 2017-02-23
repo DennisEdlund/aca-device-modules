@@ -105,19 +105,33 @@ class Extron::UsbExtenderPlus::VirtualSwitcher
     end
 
 
+    def unjoin_all
+        system.all(:USB_Device).unjoin_all
+        schedule.in(200) do
+            system.all(:USB_Host).unjoin_all
+        end
+    end
+
+
     protected
+
+
+    # Unjoin Devices first
+    # Then unjoin the hosts
 
 
     def perform_join(host, device)
         device.unjoin_all
 
-        # Check if already joined on this host
-        unless host[:joined_to].include?(device[:mac_address])
-            host.join(device[:mac_address])
-        end
-
         schedule.in('1s') do
             device.join(host[:mac_address])
+
+            # Check if already joined on this host
+            unless host[:joined_to].include?(device[:mac_address])
+                schedule.in(100) do
+                    host.join(device[:mac_address])
+                end
+            end
         end
     end
 
