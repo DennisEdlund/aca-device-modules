@@ -58,7 +58,7 @@ class Amx::Svsi::VirtualSwitcher
             stream = encoder.nil? ? 0 : encoder[:stream_id]
             [*outputs].each do |output|
                 decoder = decoders[output]
-                unless decode.nil?
+                unless decoder.nil?
                     connect_method.call(decoder, stream)
                 else
                     logger.warn \
