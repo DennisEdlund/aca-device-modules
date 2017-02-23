@@ -23,15 +23,15 @@ class Amx::Svsi::VirtualSwitcher
 
 
     def switch(signal_map)
-        connect(signal_map, :switch)
+        connect(signal_map, &:switch)
     end
 
     def switch_video(signal_map)
-        connect(signal_map, :switch_video)
+        connect(signal_map, &:switch_video)
     end
 
     def switch_audio(signal_map)
-        connect(signal_map, :switch_audio)
+        connect(signal_map, &:switch_audio)
     end
 
 
@@ -49,7 +49,7 @@ class Amx::Svsi::VirtualSwitcher
     # the encoder index within the current system. Similarly, outputs can be
     # referred to via the device name or index and can be a single item or an
     # array.
-    def connect(signal_map, connect_method = :switch)
+    def connect(signal_map, &connect_method)
         encoders = get_system_modules(:Encoder)
         decoders = get_system_modules(:Decoder)
 
@@ -58,7 +58,12 @@ class Amx::Svsi::VirtualSwitcher
             stream = encoder.nil? ? 0 : encoder[:stream_id]
             [*outputs].each do |output|
                 decoder = decoders[output]
-                decoder.send(connect_method, stream) unless decoder.nil?
+                unless decode.nil?
+                    connect_method.call(decoder, stream)
+                else
+                    logger.warn \
+                        "unable to switch - decoder #{output} not found"
+                end
             end
         end
     end
