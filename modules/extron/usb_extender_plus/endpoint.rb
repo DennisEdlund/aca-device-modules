@@ -122,7 +122,10 @@ class Extron::UsbExtenderPlus::Endpoint
 
         logger.debug { "Extron USB sent #{resp}" }
 
-        if resp[0..21] == '2f03f4a200000000030100'
+        check = resp[0..21]
+        if check == '2f03f4a200000000030100' || check == '2f03f4a200000000030101'
+            self[:is_host] = check[-1] == '0'
+
             macs = resp[22..-1].scan(/.{12}/)
             logger.debug { "Extron USB joined with: #{macs}" }
             self[:joined_to] = macs
