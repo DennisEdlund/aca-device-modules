@@ -76,7 +76,7 @@ class Extron::UsbExtenderPlus::Endpoint
 
 
     def unjoin_all
-        query_join.then do
+        query_joins.then do
             if self[:joined_to].empty?
                 logger.debug 'nothing to unjoin from'
             end
@@ -90,7 +90,7 @@ class Extron::UsbExtenderPlus::Endpoint
     end
 
     def unjoin(from)
-        query_join.then do
+        query_joins.then do
             mac = if from.is_a? Integer
                 self[:joined_to][from]
             else

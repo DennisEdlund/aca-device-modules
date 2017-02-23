@@ -35,7 +35,7 @@ class Extron::UsbExtenderPlus::VirtualSwitcher
     # Selects the first host and switches the selected device to it.
     def switch_to(device)
         devices = get_devices
-        dev = devices[device]
+        dev = devices[device.to_s]
         host = system[:USB_Host]
 
         if dev && host
@@ -45,7 +45,7 @@ class Extron::UsbExtenderPlus::VirtualSwitcher
             dev.query_joins
             host.query_joins
         elsif dev.nil?
-            logger.warn "unable to switch - device #{device} not found! (host: #{host.nil?})"
+            logger.warn "unable to switch - device #{device} not found! (host: #{!host.nil?})"
         elsif host.nil?
             logger.warn "unable to switch - no USB hosts in system"
         end
@@ -55,13 +55,14 @@ class Extron::UsbExtenderPlus::VirtualSwitcher
         hosts   = get_hosts
         devices = get_devices
 
-        endpoints = Set.new
+        host_joins = Set.new
+        device_joins = Set.new
 
                   # input, outputs
         map.each do |host, devs|
             devs = Array(devs)
 
-            if host == 0
+            if host == 0 || host == '0'
                 devs.each do |dev|
                     device = devices[dev.to_s]
                     if device
@@ -75,12 +76,12 @@ class Extron::UsbExtenderPlus::VirtualSwitcher
                 host_actual = hosts[host]
 
                 if host_actual
-                    endpoints << host_actual
+                    host_joins << host
 
                     devs.each do |dev|
                         device = devices[dev.to_s]
                         if device
-                            endpoints << device
+                            device_joins << dev.to_s
                             perform_join(host_actual, device)
                         else
                             logger.warn "unable to switch - device #{dev} not found!"
@@ -92,9 +93,8 @@ class Extron::UsbExtenderPlus::VirtualSwitcher
             end
         end
 
-        endpoints.each do |endpoint|
-            endpoint.query_join
-        end
+        device_joins.each { |endpoint| devices[endpoint].query_join }
+        host_joins.each { |endpoint| hosts[endpoint].query_join }
     end
 
 
@@ -108,6 +108,7 @@ class Extron::UsbExtenderPlus::VirtualSwitcher
         end
 
         unless device[:joined_to].include?(host[:mac_address])
+            device.unjoin_all
             device.join(host[:mac_address])
         end
     end
