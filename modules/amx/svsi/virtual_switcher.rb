@@ -62,7 +62,7 @@ class Amx::Svsi::VirtualSwitcher
                     connect_method.call(decoder, stream)
                 else
                     logger.warn \
-                        "unable to switch - decoder #{output} not found"
+                        "unable to switch - decoder \"#{output}\" not found"
                 end
             end
         end
@@ -74,10 +74,12 @@ class Amx::Svsi::VirtualSwitcher
     # via index, name or the name configured on the device itself.
     def get_system_modules(name)
         devices = {}
-        system.all(name).each_with_index do |mod, idx|
-            devices[idx.to_s] = mod
-            devices["#{name}_#{idx}"] = mod
+        index = 1
+        system.all(name).each do |mod|
+            devices[index.to_s] = mod
+            devices["#{name}_#{index}"] = mod
             devices[mod[:name]] = mod unless mod[:name].nil?
+            index += 1
         end
         devices
     end
