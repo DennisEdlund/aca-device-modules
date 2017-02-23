@@ -61,7 +61,7 @@ class Extron::UsbExtenderPlus::Endpoint
 
 
     def query_joins
-        promise = send('2f03f4a2000000000300', hex_string: true, name: :join_query)
+        promise = send('2f03f4a2000000000300', hex_string: true)
         promise.catch do
             set_connected_state(false) if self[:connected]
             logger.warn "Extron USB Device Probably Offline: #{remote_address}\nJoin query failed."
