@@ -88,7 +88,7 @@ class Amx::Svsi::VirtualSwitcher
         system.all(name).each do |mod|
             devices[index.to_s] = mod
             devices["#{name}_#{index}"] = mod
-            devices[mod[:device_name]] = mod unless mod[:device_name].nil?
+            devices[mod[:device_name]] = mod if mod[:device_name]
             index += 1
         end
         devices
