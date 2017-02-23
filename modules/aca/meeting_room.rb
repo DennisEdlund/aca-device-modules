@@ -57,11 +57,26 @@ class Aca::MeetingRoom < Aca::Joiner
             modes = setting(:modes)
             if modes
                 @modes = modes
-                self[:modes] = setting(:ignore_modes) ? nil : @modes.keys
+                if setting(:ignore_modes)
+                    self[:modes] = nil
+                    self[:cog_modes] = nil
+                else
+                    cogs = []
+                    mods = []
+                    @modes.each do |mod|
+                        cogs << mod[:cog_label] if mod[:cog_label]
+                        mods << mod[:home_label] if mod[:home_label]
+                    end
+
+                    self[:modes] = mods
+                    self[:cog_modes] = cogs
+                end
+                self[:current_mode] = setting(:current_mode) unless self[:current_mode]
                 switch_mode(self[:current_mode]) if self[:current_mode]
             else
                 @modes = nil
                 self[:modes] = nil
+                self[:cog_modes] = nil
                 self[:current_mode] = nil
             end
 
@@ -107,6 +122,27 @@ class Aca::MeetingRoom < Aca::Joiner
             self[:apps] = @apps.keys if @apps
             self[:channels] = @channels.keys if @channels
             self[:cameras] = @cameras.keys if @cameras
+
+
+=begin
+    "join_modes": {
+        "rooms 1 and 2": {
+            "rooms": ["sys_123", "sys124"],
+            "mode": "mode_name"
+        },
+        "rooms 1 and 2 and 3": {
+            "rooms": ["sys_123", "sys124", "sys125"],
+            "mode": "mode2"
+        }
+    }
+=end
+
+            @join_modes = setting(:join_modes)
+            if @join_modes
+                @join_modes.each_value do |jm|
+                    jm[:rooms] = Set.new(jm[:rooms])
+                end
+            end
 
             # Example definition:
 =begin
@@ -198,6 +234,16 @@ class Aca::MeetingRoom < Aca::Joiner
                     # }
                     system[:Mixer].trigger(@defaults[:on_sharing_trigger]) if @defaults[:on_sharing_trigger]
                     system[:Switcher].switch(@defaults[:sharing_routes]) if @defaults[:sharing_routes]
+                end
+            end
+
+            # Check for any room joining modes that should be triggered
+            if @join_modes
+                rms = Set.new(ids)
+                @join_modes.each_value do |jm|
+                    if jm[:rooms] == rms
+                        perform_action(mod: :System, func: :switch_mode, args: [jm[:mode], true])
+                    end
                 end
             end
         end
@@ -307,7 +353,7 @@ class Aca::MeetingRoom < Aca::Joiner
     end
 
 
-    def switch_mode(mode_name)
+    def switch_mode(mode_name, from_join = false)
         logger.debug { "switch mode called for #{mode_name} -- #{!!@modes}" }
 
         return unless @modes
@@ -322,6 +368,7 @@ class Aca::MeetingRoom < Aca::Joiner
             self[:outputs] = ActiveSupport::HashWithIndifferentAccess.new.deep_merge(mode_outs.merge(default_outs))
             @original_outputs = self[:outputs].deep_dup
             self[:current_mode] = mode_name
+            define_setting(:current_mode, self[:current_mode])
 
             # Update the inputs
             inps = (setting(:inputs) + (mode[:inputs] || [])) - (mode[:remove_inputs] || [])
@@ -346,6 +393,16 @@ class Aca::MeetingRoom < Aca::Joiner
                 sys[:Switcher].switch(mode[:routes]) if mode[:routes]
                 sys[:Lighting].trigger(@light_group, mode[:light_preset]) if mode[:light_preset]
                 sys[:VideoWall].preset(mode[:videowall_preset]) if mode[:videowall_preset]
+
+                if mode[:execute]
+                    mode[:execute].each do |cmd|
+                        begin
+                            system.get_implicit(cmd[:module]).method_missing(cmd[:func], *cmd[:args])
+                        rescue => e
+                            logger.print_error e, 'executing mode change'
+                        end
+                    end
+                end
             end
 
             difference.each do |display|
