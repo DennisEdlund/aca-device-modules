@@ -61,7 +61,7 @@ class Amx::Svsi::VirtualSwitcher
                 unless encoder.nil?
                     stream = encoder[:stream_id]
                 else
-                    logger.warn "could not find decoder \"#{output}\""
+                    logger.warn "could not find encoder \"#{input}\""
                     break
                 end
             end
