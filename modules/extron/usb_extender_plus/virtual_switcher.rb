@@ -71,7 +71,13 @@ class Extron::UsbExtenderPlus::VirtualSwitcher
                     device = devices[dev.to_s]
                     if device
                         # Unjoin performs the join query
-                        device.unjoin_all
+                        host_mac = device[:joined_to][0]
+                        if host_mac
+                            device.unjoin_all
+                            schedule.in(100) do
+                                unjoin_previous_host(host_mac)
+                            end
+                        end
                     else
                         logger.warn "unable to switch - device #{dev} not found!"
                     end
@@ -116,27 +122,42 @@ class Extron::UsbExtenderPlus::VirtualSwitcher
     protected
 
 
-    # Unjoin Devices first
-    # Then unjoin the hosts
-
-
     def perform_join(host, device)
         defer = thread.defer
 
-        device.unjoin_all
-        schedule.in('1s') do
-            device.join(host[:mac_address])
+        # Check if these devices are already joined
+        host_joined = host[:joined_to].include?(device[:mac_address])
+        device_joined = device[:joined_to].include?(host[:mac_address])
 
-            # Check if already joined on this host
-            unless host[:joined_to].include?(device[:mac_address])
-                schedule.in(100) do
-                    defer.resolve(true)
-                    host.join(device[:mac_address])
+        unless host_joined && device_joined
+            host_mac = device[:joined_to][0]
+            device.unjoin_all
+
+            # Wait a second to give the poor things some time
+            schedule.in('1s') do
+                unjoin_previous_host(host_mac) if host_mac
+                device.join(host[:mac_address])
+
+                # Check if already joined on this host
+                # This is possible
+                unless host_joined
+                    schedule.in(100) do
+                        defer.resolve(true)
+                        host.join(device[:mac_address])
+                    end
                 end
             end
         end
 
         defer.promise
+    end
+
+    def unjoin_previous_host(mac)
+        system.all(:USB_Host).each do |host|
+            if host[:joined_to].include?(mac)
+                host.unjoin(mac)
+            end
+        end
     end
 
     # Enumerate the devices that make up this virtual switcher

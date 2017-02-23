@@ -26,7 +26,7 @@ class Extron::UsbExtenderPlus::Endpoint
     udp_port 6137
     descriptive_name 'Extron USB Extender Plus Endpoint'
     generic_name :USB_Device
-    delay between_sends: 500
+    delay between_sends: 300
 
 
     def on_load
@@ -76,38 +76,34 @@ class Extron::UsbExtenderPlus::Endpoint
 
 
     def unjoin_all
-        query_joins.then do
-            if self[:joined_to].empty?
-                logger.debug 'nothing to unjoin from'
-            end
-
-            self[:joined_to].each do |mac|
-                send_unjoin(mac)
-            end
-
-            query_joins
+        if self[:joined_to].empty?
+            logger.debug 'nothing to unjoin from'
         end
+
+        self[:joined_to].each do |mac|
+            send_unjoin(mac)
+        end
+
+        query_joins
     end
 
     def unjoin(from)
-        query_joins.then do
-            mac = if from.is_a? Integer
-                self[:joined_to][from]
+        mac = if from.is_a? Integer
+            self[:joined_to][from]
+        else
+            formatted = byte_to_hex(hex_to_byte(from))
+            if self[:joined_to].include? formatted
+                formatted
             else
-                formatted = byte_to_hex(hex_to_byte(from))
-                if self[:joined_to].include? formatted
-                    formatted
-                else
-                    nil
-                end
+                nil
             end
+        end
 
-            if mac
-                send_unjoin(mac)
-                query_joins
-            else
-                logger.debug { "not currently joined to #{from}" }
-            end
+        if mac
+            send_unjoin(mac)
+            query_joins
+        else
+            logger.debug { "not currently joined to #{from}" }
         end
     end
 
