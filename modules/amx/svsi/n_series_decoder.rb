@@ -37,10 +37,14 @@ class Amx::Svsi::NSeriesDecoder
     end
 
 
+    # Status commands
+
     def do_poll
         do_send 'getStatus', priority: 0
     end
 
+
+    # Switching
 
     def switch(stream_id)
         do_send 'set', stream_id
@@ -63,6 +67,8 @@ class Amx::Svsi::NSeriesDecoder
     end
 
 
+    # Audio
+
     def mute(state = true)
         if state
             do_send 'mute', name: :mute
@@ -73,6 +79,21 @@ class Amx::Svsi::NSeriesDecoder
 
     def unmute
         do_send 'unmute', name: :mute
+    end
+
+
+    # Play modes
+
+    def live(state = true)
+        if state
+            do_send 'live'
+        else
+            local self[:playlist]
+        end
+    end
+
+    def local(playlist = 0)
+        do_send 'local', playlist
     end
 
 
