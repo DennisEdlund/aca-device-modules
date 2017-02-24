@@ -70,7 +70,7 @@ class Amx::Svsi::NSeriesDecoder
     # Audio
 
     def mute(state = true)
-        if state
+        if is_affirmative? state
             do_send 'mute', name: :mute
         else
             unmute
@@ -85,7 +85,7 @@ class Amx::Svsi::NSeriesDecoder
     # Play modes
 
     def live(state = true)
-        if state
+        if is_affirmative? state
             do_send 'live'
         else
             local self[:playlist]
@@ -96,6 +96,32 @@ class Amx::Svsi::NSeriesDecoder
         do_send 'local', playlist
     end
 
+
+    # Scaling
+
+    def scaler(state)
+        if is_affirmative? state
+            do_send 'scalerenable', name: :scaler
+        else
+            do_send 'scalerdisable', name: :scaler
+        end
+    end
+
+    OUTPUT_MODES = [
+        'auto',
+        '1080p59.94',
+        '1080p60',
+        '720p60',
+        '4K30',
+        '4K25'
+    ]
+    def output_resolution(mode)
+        unless OUTPUT_MODES.include? mode
+            logger.error("\"#{mode}\" is not a valid resolution")
+            return
+        end
+        do_send 'modeset', mode
+    end
 
     protected
 
@@ -129,6 +155,13 @@ class Amx::Svsi::NSeriesDecoder
         },
         mute: {
             transform: -> (x) { x == '1' }
+        },
+        scalerbypass: {
+            status_variable: :scaler_active,
+            transform: -> (x) { x != 'no' }
+        },
+        mode: {
+            status_variable: :output_resolution,
         }
     }
     def received(data, deferrable, command)
