@@ -62,6 +62,18 @@ class Amx::Svsi::NSeriesDecoder
         do_send 'KVMMasterIP', host, options
     end
 
+    def mute(state = true)
+        if state
+            do_send 'mute'
+        else
+            unmute
+        end
+    end
+
+    def unmute
+        do_send 'unmute'
+    end
+
 
     protected
 
