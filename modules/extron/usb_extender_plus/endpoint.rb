@@ -76,13 +76,17 @@ class Extron::UsbExtenderPlus::Endpoint
 
 
     def unjoin_all
+        unjoins = []
+
         if self[:joined_to].empty?
             logger.debug 'nothing to unjoin from'
         end
 
         self[:joined_to].each do |mac|
-            send_unjoin(mac)
+            unjoins << send_unjoin(mac)
         end
+
+        thread.finally(unjoins)
     end
 
     def unjoin(from)
