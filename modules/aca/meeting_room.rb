@@ -57,27 +57,28 @@ class Aca::MeetingRoom < Aca::Joiner
             modes = setting(:modes)
             if modes
                 @modes = {}
+
+                cogs = []
+                mods = []
+
+                modes.each do |key, mod|
+                    @modes[key] = mod
+
+                    if mod[:cog_label]
+                        @modes[mod[:cog_label]] = mod
+                        cogs << mod[:cog_label]
+                    end
+
+                    if mod[:home_label]
+                        @modes[mod[:home_label]] = mod
+                        mods << mod[:home_label]
+                    end
+                end
+
                 if setting(:ignore_modes)
                     self[:modes] = nil
                     self[:cog_modes] = nil
                 else
-                    cogs = []
-                    mods = []
-
-                    modes.each do |key, mod|
-                        @modes[key] = mod
-
-                        if mod[:cog_label]
-                            @modes[mod[:cog_label]] = mod
-                            cogs << mod[:cog_label]
-                        end
-
-                        if mod[:home_label]
-                            @modes[mod[:home_label]] = mod
-                            mods << mod[:home_label]
-                        end
-                    end
-
                     self[:modes] = mods
                     self[:cog_modes] = cogs
                 end
@@ -257,10 +258,13 @@ class Aca::MeetingRoom < Aca::Joiner
 
             # Check for any room joining modes that should be triggered
             if @join_modes
-                rms = Set.new(ids)
+                check = ids.collect(&:to_s)
+                rms = Set.new(check)
+                rms << system.id.to_s
                 @join_modes.each_value do |jm|
                     if jm[:rooms] == rms
                         perform_action(mod: :System, func: :switch_mode, args: [jm[:mode], true])
+                        break
                     end
                 end
             end
@@ -428,7 +432,7 @@ class Aca::MeetingRoom < Aca::Joiner
                 video_mute(display)
             end
         else
-            logger.warn "unabled to find mode #{mode_name} -- bad request?"
+            logger.warn "unabled to find mode #{mode_name} -- bad request?\n#{@modes.inspect}"
         end
     end
 
