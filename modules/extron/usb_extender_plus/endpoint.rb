@@ -109,7 +109,7 @@ class Extron::UsbExtenderPlus::Endpoint
 
     def join(mac)
         logger.debug { "joining with #{mac}" }
-        send "2f03f4a2020000000302#{mac}", hex_string: true, wait: false
+        send "2f03f4a2020000000302#{mac}", hex_string: true, wait: false, delay: 600
     end
 
 
@@ -127,6 +127,9 @@ class Extron::UsbExtenderPlus::Endpoint
             self[:joined_to] = macs
         elsif resp == '2f03f4a2010000000003'
             logger.debug 'Extron USB responded to UDP ping'
+        elsif resp == '2f03f4a2020000000003'
+            # I think this is a busy response...
+            return :retry
         else
             logger.info "Unknown response from extron: #{resp}"
         end
@@ -140,6 +143,6 @@ class Extron::UsbExtenderPlus::Endpoint
 
     def send_unjoin(mac)
         logger.debug { "unjoining from #{mac}" }
-        send "2f03f4a2020000000303#{mac}", hex_string: true, wait: false
+        send "2f03f4a2020000000303#{mac}", hex_string: true, wait: false, delay: 600
     end
 end
