@@ -80,7 +80,7 @@ class Extron::UsbExtenderPlus::VirtualSwitcher
                     end
                 end
             else
-                host_actual = hosts[host]
+                host_actual = hosts[host.to_s]
 
                 if host_actual
                     devs.each do |dev|
