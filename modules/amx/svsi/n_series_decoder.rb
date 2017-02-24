@@ -56,6 +56,12 @@ class Amx::Svsi::NSeriesDecoder
         do_send 'seta', stream_id, options
     end
 
+    def switch_kvm(ip_address, video_follow = true, options = {})
+        host = ip_address
+        host << ",#{video_follow ? 1 : 0}"
+        do_send 'KVMMasterIP', host, options
+    end
+
 
     protected
 
