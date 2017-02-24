@@ -46,11 +46,7 @@ class Aca::MeetingRoom < Aca::Joiner
             # Grab any video wall details
             # {Display_1: {module: VidWall, input: display_port} }
             @vidwalls = setting(:vidwalls) || {}
-
-            # We don't want to break things on update if inputs define audio settings
-            # and there is a presentation currently
             @original_outputs = setting(:outputs)
-            self[:outputs] = ActiveSupport::HashWithIndifferentAccess.new.deep_merge(@original_outputs)
 
             # Grab the list of inputs and outputs
             self[:sources] = setting(:sources)
@@ -86,13 +82,18 @@ class Aca::MeetingRoom < Aca::Joiner
                 # Load the current mode from the database (in case of system crash)
                 self[:current_mode] = setting(:current_mode) unless self[:current_mode]
                 if self[:current_mode]
-                    switch_mode(self[:current_mode])
+                    switch_mode(self[:current_mode], booting: true)
                     begin
                         self[:current_cog_mode] = @modes[self[:current_mode]][:cog_label]
                     rescue => e
                     end
+                else
+                    self[:outputs] = ActiveSupport::HashWithIndifferentAccess.new.deep_merge(@original_outputs)
                 end
             else
+                # We don't want to break things on update if inputs define audio settings
+                # and there is a presentation currently
+                self[:outputs] = ActiveSupport::HashWithIndifferentAccess.new.deep_merge(@original_outputs)
                 @modes = nil
                 self[:modes] = nil
                 self[:cog_modes] = nil
@@ -375,7 +376,7 @@ class Aca::MeetingRoom < Aca::Joiner
     end
 
 
-    def switch_mode(mode_name, from_join = false)
+    def switch_mode(mode_name, from_join = false, booting: false)
         logger.debug { "switch mode called for #{mode_name} -- #{!!@modes}" }
 
         return unless @modes
@@ -428,8 +429,10 @@ class Aca::MeetingRoom < Aca::Joiner
                 end
             end
 
-            difference.each do |display|
-                video_mute(display)
+            unless booting
+                difference.each do |display|
+                    video_mute(display)
+                end
             end
         else
             logger.warn "unabled to find mode #{mode_name} -- bad request?\n#{@modes.inspect}"
