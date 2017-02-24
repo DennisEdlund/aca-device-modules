@@ -83,8 +83,6 @@ class Extron::UsbExtenderPlus::Endpoint
         self[:joined_to].each do |mac|
             send_unjoin(mac)
         end
-
-        query_joins
     end
 
     def unjoin(from)
@@ -101,7 +99,6 @@ class Extron::UsbExtenderPlus::Endpoint
 
         if mac
             send_unjoin(mac)
-            query_joins
         else
             logger.debug { "not currently joined to #{from}" }
         end
@@ -109,7 +106,7 @@ class Extron::UsbExtenderPlus::Endpoint
 
     def join(mac)
         logger.debug { "joining with #{mac}" }
-        send "2f03f4a2020000000302#{mac}", hex_string: true, wait: false, delay: 600
+        send "2f03f4a2020000000302#{mac}", hex_string: true, delay: 600
     end
 
 
@@ -125,13 +122,20 @@ class Extron::UsbExtenderPlus::Endpoint
             macs = resp[22..-1].scan(/.{12}/)
             logger.debug { "Extron USB joined with: #{macs}" }
             self[:joined_to] = macs
-        elsif resp == '2f03f4a2010000000003'
-            logger.debug 'Extron USB responded to UDP ping'
-        elsif resp == '2f03f4a2020000000003'
-            # I think this is a busy response...
-            return :retry
         else
-            logger.info "Unknown response from extron: #{resp}"
+            case resp
+            when '2f03f4a2010000000003'
+                logger.debug 'Extron USB responded to UDP ping'
+            when '2f03f4a2020000000003'
+                logger.debug 'join/unjoin success'
+                query_joins
+            when '2f03f4a2020000000308'
+                # I think this is what this is.. just a guess
+                logger.debug 'join/unjoin failed.. retrying'
+                return :retry
+            else
+                logger.info "Unknown response from extron: #{resp}"
+            end
         end
 
         :success
@@ -143,6 +147,6 @@ class Extron::UsbExtenderPlus::Endpoint
 
     def send_unjoin(mac)
         logger.debug { "unjoining from #{mac}" }
-        send "2f03f4a2020000000303#{mac}", hex_string: true, wait: false, delay: 600
+        send "2f03f4a2020000000303#{mac}", hex_string: true, delay: 600
     end
 end

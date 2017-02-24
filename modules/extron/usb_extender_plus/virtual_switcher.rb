@@ -57,9 +57,6 @@ class Extron::UsbExtenderPlus::VirtualSwitcher
         hosts   = get_hosts
         devices = get_devices
 
-        host_joins = Set.new
-        device_joins = Set.new
-
         wait = []
 
                   # input, outputs
@@ -74,8 +71,8 @@ class Extron::UsbExtenderPlus::VirtualSwitcher
                         host_mac = device[:joined_to][0]
                         if host_mac
                             device.unjoin_all
-                            schedule.in(100) do
-                                unjoin_previous_host(host_mac)
+                            wait << schedule.in(100) do
+                                unjoin_previous_host(host_mac, device[:mac_address])
                             end
                         end
                     else
@@ -86,12 +83,9 @@ class Extron::UsbExtenderPlus::VirtualSwitcher
                 host_actual = hosts[host]
 
                 if host_actual
-                    host_joins << host
-
                     devs.each do |dev|
                         device = devices[dev.to_s]
                         if device
-                            device_joins << dev.to_s
                             wait << perform_join(host_actual, device)
                         else
                             logger.warn "unable to switch - device #{dev} not found!"
@@ -103,11 +97,7 @@ class Extron::UsbExtenderPlus::VirtualSwitcher
             end
         end
 
-        # Wait for the perform join to complete
-        thread.all(wait).finally do
-            device_joins.each { |endpoint| devices[endpoint].query_joins }
-            host_joins.each { |endpoint| hosts[endpoint].query_joins }
-        end
+        thread.all(wait)
     end
 
 
@@ -135,7 +125,7 @@ class Extron::UsbExtenderPlus::VirtualSwitcher
 
             # Wait a second to give the poor things some time
             schedule.in('1s') do
-                unjoin_previous_host(host_mac) if host_mac
+                unjoin_previous_host(host_mac, device[:mac_address]) if host_mac
                 device.join(host[:mac_address])
 
                 # Check if already joined on this host
@@ -152,12 +142,19 @@ class Extron::UsbExtenderPlus::VirtualSwitcher
         defer.promise
     end
 
-    def unjoin_previous_host(mac)
+    def unjoin_previous_host(host_mac, device_mac)
         system.all(:USB_Host).each do |host|
-            if host[:joined_to].include?(mac)
-                host.unjoin(mac)
+            if host[:mac_address] == host_mac
+                if host[:joined_to].include?(device_mac)
+                    logger.debug 'unjoining previous host from device'
+                    host.unjoin(device_mac)
+                else
+                    logger.debug 'previous host was not joined'
+                end
+                return
             end
         end
+        logger.debug 'no previous host found'
     end
 
     # Enumerate the devices that make up this virtual switcher
