@@ -42,36 +42,37 @@ class Amx::Svsi::NSeriesDecoder
     end
 
 
-    def switch(stream_id, options = {})
-        do_send 'set', stream_id, options
-        switch_audio 0, options  # enable AFV
+    def switch(stream_id)
+        do_send 'set', stream_id
+        switch_audio 0  # enable AFV
     end
 
-    def switch_video(stream_id, options = {})
+    def switch_video(stream_id)
         switch_audio self[:audio]  # lock audio to current stream
-        do_send 'set', stream_id, options
+        do_send 'set', stream_id
     end
 
-    def switch_audio(stream_id, options = {})
-        do_send 'seta', stream_id, options
+    def switch_audio(stream_id)
+        do_send 'seta', stream_id
     end
 
-    def switch_kvm(ip_address, video_follow = true, options = {})
+    def switch_kvm(ip_address, video_follow = true)
         host = ip_address
         host << ",#{video_follow ? 1 : 0}"
-        do_send 'KVMMasterIP', host, options
+        do_send 'KVMMasterIP', host
     end
+
 
     def mute(state = true)
         if state
-            do_send 'mute'
+            do_send 'mute', name: :mute
         else
             unmute
         end
     end
 
     def unmute
-        do_send 'unmute'
+        do_send 'unmute', name: :mute
     end
 
 
