@@ -12,6 +12,7 @@ class Embedia::ControlPoint
     
     delay between_sends: 200
     tokenize indicator: ':', delimiter: "\r\n"
+    wait_response false
 
 
 
@@ -36,8 +37,8 @@ class Embedia::ControlPoint
 
     Commands = {
         stop: 0x28,
-        extend: 0x4e,
-        retract: 0x4b,
+        down: 0x4e,  # Also extend
+        up: 0x4b, # Also retract
         next_extent_preset: 0x4f,
         previous_extent_preset: 0x50,
 
@@ -50,37 +51,40 @@ class Embedia::ControlPoint
     }
     Commands.each do |command, value|
         define_method command do |address, **options|
-            do_send [address.to_i, 0x06, 0, 1, 0, value], **options
+            do_send [address.to_i, 0x06, 0, 1, 0, value], options
         end
     end
 
-    def extent_preset(address, number)
+    def extent_preset(address, number, **options)
         num = 0x1D + in_range(number.to_i, 10, 1)
-        do_send [address.to_i, 0x06, 0, 1, 0, num], name: :extent_preset
+        options[:name] = :extent_preset
+        do_send [address.to_i, 0x06, 0, 1, 0, num]
     end
 
-    def tilt_preset(address, number)
+    def tilt_preset(address, number, **options)
         num = 0x39 + in_range(number.to_i, 10, 1)
-        do_send [address.to_i, 0x06, 0, 1, 0, num], name: :tilt_preset
+        options[:name] = :tilt_preset
+        do_send [address.to_i, 0x06, 0, 1, 0, num]
     end
 
-    def query_sensor(address)
-        do_send [address.to_i, 0x03, 0, 1, 0, 1]
+    def query_sensor(address, **options)
+        do_send [address.to_i, 0x03, 0, 1, 0, 1], options
     end
+
 
     def received(data_raw, resolve, command)
-        logger.debug { "Embedia sent #{data_raw}" }
+        logger.debug {
+            data = hex_to_byte(data_raw)
+            address = data[0]
+            func = data[1]
 
-        data = hex_to_byte(data_raw[1..-1])
-        address = data[0]
-        func = data[1]
-
-        case func
-        when 3 # Sensor level
-            logger.info "Sensor response #{data_raw} on address 0x#{address.to_s(16)}"
-        else
-            logger.info "Unknown response #{data_raw} on address 0x#{address.to_s(16)}"
-        end
+            case func
+            when 3 # Sensor level
+                "sensor response #{data_raw} on address 0x#{address.to_s(16)}" }
+            else
+                "sent #{data_raw} on address 0x#{address.to_s(16)} for function #{func.to_s(16)}"
+            end
+        }
 
         return :success
     end
@@ -90,16 +94,8 @@ class Embedia::ControlPoint
 
 
     def do_send(data, **options)
-        sending = byte_to_hex(data + [lrc_checksum(data)])
-        logger.debug "sending :#{sending}"
-        send ":#{sending}\r\n", **options
-    end
-
-    def lrc_checksum(data)
-        lrc = 58 # === ':'
-        data.each do |byte|
-            lrc = lrc ^ byte
-        end
-        (lrc & 0xFF)
+        sending = byte_to_hex(data).upcase
+        logger.debug "sending :#{sending}--"
+        send ":#{sending}--\r\n", options
     end
 end
