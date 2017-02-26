@@ -82,7 +82,7 @@ class Embedia::ControlPoint
             when 3 # Sensor level
                 "sensor response #{data_raw} on address 0x#{address.to_s(16)}"
             else
-                "sent #{data_raw} on address 0x#{address.to_s(16)} for function #{func.to_s(16)}"
+                "sent #{data_raw} on address 0x#{address.to_s(16)}"
             end
         }
 
