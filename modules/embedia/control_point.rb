@@ -74,7 +74,7 @@ class Embedia::ControlPoint
 
     def received(data_raw, resolve, command)
         logger.debug {
-            data = hex_to_byte(data_raw)
+            data = str_to_array(hex_to_byte(data_raw))
             address = data[0]
             func = data[1]
 
