@@ -92,7 +92,7 @@ class Embedia::ControlPoint
     def do_send(data, **options)
         sending = byte_to_hex(data + [lrc_checksum(data)])
         logger.debug "sending :#{sending}"
-        send ":#{sending)}\r\n", **options
+        send ":#{sending}\r\n", **options
     end
 
     def lrc_checksum(data)
