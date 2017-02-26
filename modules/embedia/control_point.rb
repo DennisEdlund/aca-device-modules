@@ -80,7 +80,7 @@ class Embedia::ControlPoint
 
             case func
             when 3 # Sensor level
-                "sensor response #{data_raw} on address 0x#{address.to_s(16)}" }
+                "sensor response #{data_raw} on address 0x#{address.to_s(16)}"
             else
                 "sent #{data_raw} on address 0x#{address.to_s(16)} for function #{func.to_s(16)}"
             end
@@ -95,7 +95,7 @@ class Embedia::ControlPoint
 
     def do_send(data, **options)
         sending = byte_to_hex(data).upcase
-        logger.debug "sending :#{sending}--"
+        logger.debug { "sending :#{sending}--" }
         send ":#{sending}--\r\n", options
     end
 end
