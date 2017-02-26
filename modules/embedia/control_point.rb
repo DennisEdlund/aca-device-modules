@@ -1,5 +1,7 @@
 module Embedia; end
 
+# RS232 Gateway. Baud Rate 9600,8,N,1
+
 class Embedia::ControlPoint
     include ::Orchestrator::Constants
     include ::Orchestrator::Transcoder
