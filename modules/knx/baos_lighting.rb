@@ -71,8 +71,12 @@ Settings:
     # Module Compatibility methods
     # ==================================
     def trigger(area, number, fade = 1000)
-        index, value = @triggers[:"area_#{area}"][number]
-        send_request index, value
+        if @triggers.empty?
+            send_request area, number
+        else
+            index, value = @triggers[:"area_#{area}"][number]
+            send_request index, value
+        end
     end
 
     def light_level(index, level)
