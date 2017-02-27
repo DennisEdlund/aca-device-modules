@@ -123,6 +123,53 @@ class Amx::Svsi::NSeriesDecoder
         do_send 'modeset', mode
     end
 
+
+    # Video wall processing
+
+    def videowall(width, height, x_pos, y_pos, scale = 'auto')
+        if width > 1 and height > 1
+            videowall_size width, height
+            videowall_position x_pos, y_pos
+            videowall_scaling scale
+            videowall_enable
+        else
+            videowall_disable
+        end
+    end
+
+    def videowall_enable(state = true)
+        state = is_affirmative?(state) ? 'on' : 'off'
+        do_send 'setSettings', 'wallEnable', state
+    end
+
+    def videowall_disable
+        videowall_enable false
+    end
+
+    def videowall_size(width, height)
+        do_send 'setSettings', 'wallHorMons', width
+        do_send 'setSettings', 'wallVerMons', height
+    end
+
+    def videowall_position(x, y)
+        do_send 'setSettings', 'wallMonPosH', x
+        do_send 'setSettings', 'wallMonPosV', y
+    end
+
+    VIDEOWALL_SCALING_MODES = [
+        'auto',     # decoder decides best method
+        'fit',      # aspect distort
+        'stretch'   # fill and crop
+    ]
+    def videowall_scaling(scaling_mode)
+        unless VIDEOWALL_SCALING_MODES.include? scaling_mode
+            logger.error "\"#{scaling_mode}\" is not a valid scaling mode"
+            return
+        end
+        do_send 'setSettings', 'wallStretch', scaling_mode
+    end
+
+
     protected
 
 
@@ -161,7 +208,10 @@ class Amx::Svsi::NSeriesDecoder
             transform: -> (x) { x != 'no' }
         },
         mode: {
-            status_variable: :output_resolution,
+            status_variable: :output_res,
+        },
+        inputres: {
+            status_variable: :input_res
         }
     }
     def received(data, deferrable, command)
