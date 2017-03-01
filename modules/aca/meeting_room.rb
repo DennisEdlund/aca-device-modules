@@ -193,8 +193,10 @@ class Aca::MeetingRoom < Aca::Joiner
 
             @startup_timer.cancel if @startup_timer
             time = setting(:startup_time)
-            @startup_timer = schedule.cron(time) do
-                powerup
+            if time
+                @startup_timer = schedule.cron(time) do
+                    powerup
+                end
             end
 
             # Startup schedule
