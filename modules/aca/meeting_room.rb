@@ -191,6 +191,12 @@ class Aca::MeetingRoom < Aca::Joiner
                 shutdown
             end
 
+            @startup_timer.cancel if @startup_timer
+            time = setting(:startup_time)
+            @startup_timer = schedule.cron(time)) do
+                powerup
+            end
+
             # Startup schedule
             @warmup_timer.cancel if @warmup_timer
             time = setting(:warmup_time)
