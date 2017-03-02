@@ -32,6 +32,12 @@ DESC
         on_update
     end
 
+    def on_unload
+        @subscriptions.each do |reference|
+            unsubscribe(reference)
+        end
+    end
+
     def on_update
         @subscriptions.each do |reference|
             unsubscribe(reference)
