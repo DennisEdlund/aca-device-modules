@@ -38,15 +38,12 @@ DESC
         end
 
         bindings = setting(:windows) || {}
-        show = setting(:show) || 15  # visible z layer
-        hide = setting(:hide) || 0   # hidden z layer
+        @show = setting(:show) || 15  # visible z layer
+        @hide = setting(:hide) || 0   # hidden z layer
 
         @subscriptions = bindings.map do |display_key, window_ids|
-            system.subscribe(:System, 1, display_key) do |notice|
-                source = notice.value[:source]
-                z = source == :none ? hide : show
-                [*window_ids].each {|id| layer id, z}
-            end
+            relayer window_ids system[display_key][:source]
+            link display_key, window_ids
         end
     end
 
@@ -54,8 +51,19 @@ DESC
     protected
 
 
-    def layer(window_id, z_index)
-        system[:VideoWall].window window_id, "Zorder", z_index
+    def relayer(window, source)
+        z_index = source == :none ? @hide : @show
+        [*window].each do |id|
+            system[:VideoWall].window id, "Zorder", z_index
+        end
+    end
+
+
+    def link(display, window)
+        system.subscribe(:System, 1, display) do |notice|
+            source = notice.value[:source]
+            relayer window, source
+        end
     end
 
 end
