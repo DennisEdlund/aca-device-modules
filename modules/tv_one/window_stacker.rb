@@ -42,7 +42,7 @@ DESC
         @hide = setting(:hide) || 0   # hidden z layer
 
         @subscriptions = bindings.map do |display_key, window_ids|
-            relayer window_ids system[display_key][:source]
+            relayer window_ids, system[display_key][:source]
             link display_key, window_ids
         end
     end
