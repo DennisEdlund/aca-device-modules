@@ -38,7 +38,7 @@ DESC
         end
 
         bindings = setting(:windows) || {}
-        show = setting(:show) || 99  # visible z layer
+        show = setting(:show) || 15  # visible z layer
         hide = setting(:hide) || 0   # hidden z layer
 
         @subscriptions = bindings.map do |display_key, window_ids|
