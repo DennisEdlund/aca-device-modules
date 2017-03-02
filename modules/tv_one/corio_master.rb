@@ -18,26 +18,23 @@ class TvOne::CorioMaster
     def on_load
         on_update
     end
-    
+
     def on_unload
     end
-    
+
     def on_update
         @username = setting(:username) || 'admin'
         @password = setting(:password) || 'adminpw'
     end
-    
+
     def connected
         @polling_timer = schedule.every('60s') do
-            logger.debug "-- Polling CORIOmaster"
-
-            # Get the current preset
-            preset
+            do_poll
         end
 
         login
     end
-    
+
     def disconnected
         # Disconnected will be called before connect if initial connect fails
         @polling_timer.cancel unless @polling_timer.nil?
@@ -69,15 +66,31 @@ class TvOne::CorioMaster
     end
 
 
+    # Set or query window properties
+    def window(id, property, value = nil)
+        command = "Window#{id}.#{property}"
+        if value
+            send "#{command} = #{value}\r\n", name: :"#{command}"
+        else
+            send "#{command}\r\n"
+        end
+    end
+
 
     # Runs any command provided
     def send_command(cmd)
         send "#{cmd}\r\n", wait: false
     end
 
-    
+
     protected
 
+
+    def do_poll
+        logger.debug "-- Polling CORIOmaster"
+        preset
+
+    end
 
     def received(data, resolve, command)
         if data[1..5] == 'Error'
