@@ -247,7 +247,7 @@ DESC
     protected
 
 
-    Device_settings = [
+    DEVICE_SETTINGS = [
         :network_standby,
         :auto_off_timer,
         :auto_power
@@ -256,9 +256,9 @@ DESC
     # Push any configured device settings
     def do_device_config
         logger.debug { "Syncronising device state with settings" }
-        Device_settings.each do |name|
+        DEVICE_SETTINGS.each do |name|
             value = setting(name)
-            send(name, value) unless value.nil?
+            __send__(name, value) unless value.nil?
         end
     end
 
