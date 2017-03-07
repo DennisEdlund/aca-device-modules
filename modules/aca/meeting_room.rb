@@ -418,7 +418,7 @@ class Aca::MeetingRoom < Aca::Joiner
 
             # Power on the system and apply any custom presets
             begin
-                powerup unless setting(:ignore_modes)
+                powerup unless setting(:ignore_modes) || booting
             ensure
                 sys = system
                 sys[:Mixer].trigger(mode[:audio_preset]) if mode[:audio_preset]
