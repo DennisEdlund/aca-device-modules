@@ -23,16 +23,16 @@ class Winmate::LedLightBar
     end
 
 
-    DefaultColourValues ||= {
+    DefaultColourValues = {
         red: {
-            red: 0xc2,
-            green: 0x23,
-            blue: 0x03
+            red: 255,
+            green: 0,
+            blue: 0
         },
         green: {
-            red: 0x78,
-            green: 0xb5,
-            blue: 0x77
+            red: 0,
+            green: 255,
+            blue: 0
         },
         blue: {
             red: 0,
@@ -40,8 +40,8 @@ class Winmate::LedLightBar
             blue: 255
         },
         orange: {
-            red: 0xeb,
-            green: 0x8c,
+            red: 200,
+            green: 0,
             blue: 0
         },
         off: {
