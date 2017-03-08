@@ -55,7 +55,9 @@ class Extron::UsbExtenderPlus::Endpoint
                 logger.warn "Extron USB Device Probably Offline: #{remote_address}\nUDP Ping failed."
             end
         end
+    end
 
+    def connected
         query_joins
     end
 
