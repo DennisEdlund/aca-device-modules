@@ -134,7 +134,8 @@ class Cisco::TelePresence::SxSeries < Cisco::TelePresence::SxTelnet
     def layout(mode, target = :local)
         self[:"layout_#{target}"] = mode
 
-        command(:Video, :PictureLayoutSet, params({
+        # Older version of API (pre 2016): command(:Video, :PictureLayoutSet, params({
+        command(:Video, :Layout, :LayoutFamily, :Set, params({
             :Target => target,
             :LayoutFamily => mode
         }), name: :layout)
