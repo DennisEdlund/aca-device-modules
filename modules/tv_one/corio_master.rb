@@ -109,7 +109,7 @@ class TvOne::CorioMaster
         if command
             if data[0] == '!'
                 result = data.split(' ')
-                case result[0].to_sym
+                case result[1].to_sym
                 when :"Preset.Take"
                     self[:preset] = result[-1].to_i
                 end
