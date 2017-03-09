@@ -1017,7 +1017,16 @@ class Aca::MeetingRoom < Aca::Joiner
         # -> if the display has an output
         if disp_source[:input] && disp_info[:output]
             switcher = system[:Switcher]
-            switcher.switch({disp_source[:input] => disp_info[:output]})
+
+            case disp_source[:switch_type]
+            when "video"
+              switcher.switch_video({disp_source[:input] => disp_info[:output]})
+            when "audio"
+              switcher.switch_audio({disp_source[:input] => disp_info[:output]})
+            else
+              switcher.switch({disp_source[:input] => disp_info[:output]})
+            end
+            
             if disp_source[:audio_deembed]
                 switcher.switch({disp_source[:input] => disp_source[:audio_deembed]})
             end
