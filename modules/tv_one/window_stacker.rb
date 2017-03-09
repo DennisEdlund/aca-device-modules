@@ -32,11 +32,7 @@ DESC
         on_update
     end
 
-    def on_unload
-        @subscriptions.each do |reference|
-            unsubscribe(reference)
-        end
-    end
+    def on_unload; end
 
     def on_update
         @subscriptions.each do |reference|
@@ -44,12 +40,17 @@ DESC
         end
 
         bindings = setting(:windows) || {}
+        @videowall = setting(:videowall) || 1
         @show = setting(:show) || 15  # visible z layer
         @hide = setting(:hide) || 0   # hidden z layer
 
-        @subscriptions = bindings.map do |display_key, window_ids|
-            relayer window_ids, system[display_key][:source]
-            link display_key, window_ids
+       # Subscribe to source updates and relayer on change
+        @subscriptions = bindings.map do |display, window|
+               system.subscribe(:System, 1, display) do |notice|
+                       logger.debug { "Restacking #{display} linked windows due to source change" }
+                       source = notice.value[:source]
+                       restack window, source
+               end
         end
     end
 
