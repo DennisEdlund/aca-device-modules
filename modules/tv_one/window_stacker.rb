@@ -58,18 +58,12 @@ DESC
     protected
 
 
-    def relayer(window, source)
+    def relayer(window, source); end
+    
+    def restack(window, source)
         z_index = source == :none ? @hide : @show
         [*window].each do |id|
-            system[:VideoWall].window id, "Zorder", z_index
-        end
-    end
-
-
-    def link(display, window)
-        system.subscribe(:System, 1, display) do |notice|
-            source = notice.value[:source]
-            relayer window, source
+            system.get(:VideoWall, @videowall).window id, "Zorder", z_index
         end
     end
 
