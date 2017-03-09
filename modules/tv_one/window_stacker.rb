@@ -44,13 +44,23 @@ DESC
         @show = setting(:show) || 15  # visible z layer
         @hide = setting(:hide) || 0   # hidden z layer
 
-       # Subscribe to source updates and relayer on change
+
+        # Subscribe to source updates and relayer on change
         @subscriptions = bindings.map do |display, window|
-               system.subscribe(:System, 1, display) do |notice|
-                       logger.debug { "Restacking #{display} linked windows due to source change" }
-                       source = notice.value[:source]
-                       restack window, source
-               end
+                system.subscribe(:System, 1, display) do |notice|
+                        logger.debug { "Restacking #{display} linked windows due to source change" }
+                        source = notice.value[:source]
+                        restack window, source
+                end
+        end
+
+        # Also restack after a videowall preset recall
+        @subscriptions << system.subscribe(:VideoWall, @videowall, :preset) do |notice|
+                logger.debug "Restacking all videowall windows due to preset change"
+                bindings.each do |display, window|
+                        source = system[:System][display][:source]
+                        restack window, source
+                end
         end
     end
 
@@ -59,7 +69,7 @@ DESC
 
 
     def relayer(window, source); end
-    
+
     def restack(window, source)
         z_index = source == :none ? @hide : @show
         [*window].each do |id|
