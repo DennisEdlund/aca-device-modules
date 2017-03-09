@@ -454,7 +454,7 @@ class Aca::MeetingRoom < Aca::Joiner
     #
 
     def powerup
-        switch_mode(@defaults[:default_mode]) if @defaults && @defaults[:default_mode]
+        switch_mode(@defaults[:default_mode], booting: true) if @defaults && @defaults[:default_mode]
 
         # Keep track of displays from neighboring rooms
         @setCamDefaults = true
