@@ -1,3 +1,5 @@
+# encoding: ASCII-8BIT
+
 module Samsung; end
 module Samsung::Displays; end
 
@@ -354,7 +356,7 @@ DESC
     end
 
     def do_send(command, data = [], options = {})
-        data = [data] unless data.is_a?(Array)
+        data = Array(data)
 
         if command.is_a?(Symbol)
             options[:name] = command if data.length > 0     # name unless status request
