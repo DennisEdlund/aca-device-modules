@@ -26,6 +26,7 @@ class Aca::TelevisionLogic
             time = setting(:power_on_time)
             if time
                 @warmup_timer = schedule.cron(time) do
+                    logger.info "powering ON displays in system #{system.name}"
                     power_on_displays
                     goto(@start_channel, false) if @start_channel
                 end
@@ -69,6 +70,7 @@ class Aca::TelevisionLogic
     end
 
     def power_off
+        logger.info "powering OFF displays in system #{system.name}"
         system.all(:Display).power Off
     end
 
