@@ -37,6 +37,7 @@ class Aca::TelevisionLogic
             time = setting(:power_off_time)
             if time
                 @hardoff_timer = schedule.cron(time) do
+                    logger.info "powering OFF (hard) displays in system #{system.name}"
                     power_off_displays
                 end
             end
@@ -70,7 +71,7 @@ class Aca::TelevisionLogic
     end
 
     def power_off
-        logger.info "powering OFF displays in system #{system.name}"
+        logger.info "powering off displays in system #{system.name}"
         system.all(:Display).power Off
     end
 
