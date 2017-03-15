@@ -89,7 +89,7 @@ class Aca::ExchangeBooking
 
         self[:hide_all] = setting(:hide_all) || false
         self[:touch_enabled] = setting(:touch_enabled) || false
-        self[:room_name] = setting(:room_name) || system.name
+        self[:name] = self[:room_name] = setting(:room_name) || system.name
 
         self[:control_url] = setting(:booking_control_url) || system.config.support_url
         self[:booking_controls] = setting(:booking_controls)
