@@ -16,7 +16,7 @@ module Aca; end
 # building: 'DP3',
 # level: '16'
 
-class Aca::FindmeBooking
+class Aca::ExchangeBooking
     include ::Orchestrator::Constants
     EMAIL_CACHE = ::Concurrent::Map.new
     CAN_LDAP = begin
@@ -39,7 +39,7 @@ class Aca::FindmeBooking
     end
 
 
-    descriptive_name 'Findme Room Bookings'
+    descriptive_name 'Exchange Room Bookings'
     generic_name :Bookings
     implements :logic
 
