@@ -87,11 +87,18 @@ class Aca::FindmeBooking
         @last_swipe_at = 0
         @use_act_as = setting(:use_act_as)
 
-        self[:building] = setting(:building)
-        self[:level] = setting(:level)
-        self[:room] = setting(:room)
+        self[:hide_all] = setting(:hide_all) || false
         self[:touch_enabled] = setting(:touch_enabled) || false
         self[:room_name] = setting(:room_name) || system.name
+
+        self[:control_url] = setting(:booking_control_url) || system.config.support_url
+        self[:booking_controls] = setting(:booking_controls)
+        self[:booking_catering] = setting(:booking_catering)
+        self[:booking_hide_details] = setting(:booking_hide_details)
+        self[:booking_hide_availability] = setting(:booking_hide_availability)
+        self[:booking_hide_user] = setting(:booking_hide_user)
+        self[:booking_hide_description] = setting(:booking_hide_description)
+        self[:booking_hide_timeline] = setting(:booking_hide_timeline)
 
         # Because restarting the modules results in a 'swipe' of the last read card
         ignore_first_swipe = true
@@ -169,6 +176,23 @@ class Aca::FindmeBooking
         fetch_bookings
         @polling_timer.cancel unless @polling_timer.nil?
         @polling_timer = schedule.every(setting(:update_every) || '5m', method(:fetch_bookings))
+    end
+
+
+    def set_light_status(status)
+        lightbar = system[:StatusLight]
+        return if lightbar.nil?
+
+        case status.to_sym
+        when :unavailable
+            lightbar.colour(:red)
+        when :available
+            lightbar.colour(:green)
+        when :pending
+            lightbar.colour(:orange)
+        else
+            lightbar.colour(:off)
+        end
     end
 
 
@@ -311,27 +335,43 @@ class Aca::FindmeBooking
     end
     # ---------
 
-    def create_meeting(duration, next_start = nil)
-        if next_start
-            next_start = Time.at((next_start / 1000).to_i)
+    def create_meeting(options)
+        # Check that the required params exist
+        required_fields = ["start", "end"]
+        check = required_fields - options.keys
+        if check != []
+            # There are missing required fields
+            logger.info "Required fields missing: #{check}"
+            raise "missing required fields: #{check}"
         end
 
-        start_time = Time.now
-        end_time = duration.to_i.minutes.from_now.ceil(15.minutes)
 
-        # Make sure we don't overlap the next booking
-        if next_start && next_start < end_time
-            end_time = next_start
-        end
+        req_params = {}
+        req_params[:room_email] = @ews_room
+        req_params[:title] = options[:title]
+        req_params[:start_time] = Time.at(options[:start].to_i / 1000).utc.iso8601.chop
+        req_params[:end_time] = Time.at(options[:end].to_i / 1000).utc.iso8601.chop
 
         task {
-            make_ews_booking start_time, end_time
+            username = options[:user]
+            if username.present?
+
+                user_email = ldap_lookup_email(username)
+                if user_email
+                    req_params[:user_email] = user_email
+                    make_ews_booking req_params
+                else
+                    raise "couldn't find user: #{username}"
+                end
+
+            else
+                make_ews_booking req_params
+            end
         }.then(proc { |id|
             logger.debug { "successfully created booking: #{id}" }
-            # We want to start the meeting automatically
-            start_meeting(start_time.to_i * 1000)
         }, proc { |error|
             logger.print_error error, 'creating ad hoc booking'
+            thread.reject error # propogate the error
         })
     end
 
@@ -385,6 +425,9 @@ class Aca::FindmeBooking
     # LDAP lookup to occur in worker thread
     # ====================================
     def ldap_lookup_email(username)
+        email = EMAIL_CACHE[username]
+        return email if email
+
         ldap = Net::LDAP.new @ldap_creds
         ldap.authenticate @ldap_user[:username], @ldap_user[:password] if @ldap_user
 
@@ -404,6 +447,7 @@ class Aca::FindmeBooking
         end
 
         # Returns email as a promise
+        EMAIL_CACHE[username] = email
         email
     end
 
@@ -418,9 +462,8 @@ class Aca::FindmeBooking
     # =======================================
     # EWS Requests to occur in a worker thread
     # =======================================
-    def make_ews_booking(start_time, end_time)
-        subject = 'On the spot booking'
-        user_email = self[:email]
+    def make_ews_booking(user_email: nil, subject: 'On the spot booking', room_email:, start_time:, end_time:)
+        user_email ||= self[:email]  # if swipe card used
 
         booking = {
             subject: subject,
@@ -530,7 +573,9 @@ class Aca::FindmeBooking
                 :Start => start,
                 :End => ending,
                 :Subject => item[:subject][:text],
-                :owner => item[:organizer][:elems][0][:mailbox][:elems][0][:name][:text]
+                :owner => item[:organizer][:elems][0][:mailbox][:elems][0][:name][:text],
+                :setup => 0,
+                :breakdown => 0
             }
         end
     end
