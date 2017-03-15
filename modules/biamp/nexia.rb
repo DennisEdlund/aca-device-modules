@@ -39,14 +39,13 @@ class Biamp::Nexia
         send("\xFF\xFE\x01")    # Echo off
         do_send('GETD', 0, 'DEVID')
         
-        @polling_timer = schedule.every('60s') do
+        schedule.every('60s') do
             do_send('GETD', 0, 'DEVID')
         end
     end
     
     def disconnected
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
     
     

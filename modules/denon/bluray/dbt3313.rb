@@ -29,14 +29,13 @@ class Denon::Bluray::Dbt3313
 	
 	def connected
 		do_poll
-		@polling_timer = schedule.every('1m') do
+		schedule.every('1m') do
             do_poll
         end
 	end
 	
 	def disconnected
-		@polling_timer.cancel unless @polling_timer.nil?
-		@polling_timer = nil
+		schedule.clear
 	end
 
 	

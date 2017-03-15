@@ -37,7 +37,7 @@ class Philips::Display::SicpProtocol
     def connected
         @buffer.clear
 
-        @polling_timer = schedule.every('50s') do
+        schedule.every('50s') do
             logger.debug "-- Polling Display"
             do_poll
         end
@@ -50,8 +50,7 @@ class Philips::Display::SicpProtocol
         # Disconnected may be called without calling connected
         #    Hence the check if timer is nil here
         #
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
 
 

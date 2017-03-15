@@ -34,7 +34,7 @@ class Aca::PcControl
     end
     
     def connected
-        @polling_timer = schedule.every('60s') do
+        schedule.every('60s') do
             logger.debug "-- Polling Computer"
             do_send({:control => "app", :command => 'do_nothing'}, {wait: false})
         end
@@ -42,8 +42,7 @@ class Aca::PcControl
     
     def disconnected
         self[:authenticated] = 0
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
     
     def launch_application(app, *args)

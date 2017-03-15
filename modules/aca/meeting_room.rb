@@ -186,33 +186,30 @@ class Aca::MeetingRoom < Aca::Joiner
         begin
             # Shutdown schedule
             # Every night at 11:30pm shutdown the systems if they are on
-            @shutdown_timer.cancel if @shutdown_timer
-            @shutdown_timer = schedule.cron(setting(:shutdown_time) || '30 23 * * *') do
+            schedule.clear
+            schedule.cron(setting(:shutdown_time) || '30 23 * * *') do
                 shutdown
             end
 
-            @startup_timer.cancel if @startup_timer
             time = setting(:startup_time)
             if time
-                @startup_timer = schedule.cron(time) do
+                schedule.cron(time) do
                     powerup
                 end
             end
 
             # Startup schedule
-            @warmup_timer.cancel if @warmup_timer
             time = setting(:warmup_time)
             if time
-                @warmup_timer = schedule.cron(time) do
+                schedule.cron(time) do
                     warm_up_displays
                 end
             end
 
             # Poweroff schedule
-            @hardoff_timer.cancel if @hardoff_timer
             time = setting(:hardoff_time)
             if time
-                @hardoff_timer = schedule.cron(time) do
+                schedule.cron(time) do
                     hard_off_displays
                 end
             end

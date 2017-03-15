@@ -22,10 +22,10 @@ class Aca::TelevisionLogic
         # Update the Schedules
         begin
             # Startup schedule
-            @warmup_timer.cancel if @warmup_timer
+            schedule.clear
             time = setting(:power_on_time)
             if time
-                @warmup_timer = schedule.cron(time) do
+                schedule.cron(time) do
                     logger.info "powering ON displays in system #{system.name}"
                     power_on_displays
                     goto(@start_channel, false) if @start_channel
@@ -33,10 +33,9 @@ class Aca::TelevisionLogic
             end
 
             # Poweroff schedule
-            @hardoff_timer.cancel if @hardoff_timer
             time = setting(:power_off_time)
             if time
-                @hardoff_timer = schedule.cron(time) do
+                schedule.cron(time) do
                     logger.info "powering OFF (hard) displays in system #{system.name}"
                     power_off_displays
                 end

@@ -56,7 +56,7 @@ class HuddleCam::Visca
     end
     
     def connected
-        @polling_timer = schedule.every('60s') do
+        schedule.every('60s') do
             logger.debug "-- Polling Huddle Camera"
             power? do
                 if self[:power] == On
@@ -70,8 +70,7 @@ class HuddleCam::Visca
     
     def disconnected
         # Disconnected will be called before connect if initial connect fails
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
 
 

@@ -51,7 +51,7 @@ Settings:
         req = @os.status(1).to_binary_s
         send req, priority: 0
 
-        @polling_timer = schedule.every('50s') do
+        schedule.every('50s') do
             logger.debug { "Maintaining connection" }
             send req, priority: 0
         end
@@ -62,8 +62,7 @@ Settings:
         # Disconnected may be called without calling connected
         #    Hence the check if timer is nil here
         #
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
 
 

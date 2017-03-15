@@ -21,7 +21,7 @@ class Philips::Dynalite
     end
 
     def connected
-        @polling_timer = schedule.every('1m') do
+        schedule.every('1m') do
             logger.debug "-- Dynalite Maintaining Connection"
             get_current_preset(1)    # preset for area 1
         end
@@ -32,8 +32,7 @@ class Philips::Dynalite
         # Disconnected may be called without calling connected
         #    Hence the check if timer is nil here
         #
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
     
     

@@ -41,8 +41,8 @@ class Extron::UsbExtenderPlus::Endpoint
 
         self[:location] = setting(:location)
 
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = schedule.every('120s') do
+        schedule.clear
+        schedule.every('120s') do
             logger.debug "-- polling extron USB device"
             promise = query_joins
 

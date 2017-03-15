@@ -28,7 +28,7 @@ class Lightware::Switcher::LightwareProtocol
         routing_state?(priority: 0)
         mute_state?(priority: 0)
 
-        @polling_timer = schedule.every('1m') do
+        schedule.every('1m') do
             logger.debug "Maintaining Connection"
 
             # Low priority poll to maintain connection
@@ -48,8 +48,7 @@ class Lightware::Switcher::LightwareProtocol
         # Disconnected may be called without calling connected
         #    Hence the check if timer is nil here
         #
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
 
     # MX-FR80R only

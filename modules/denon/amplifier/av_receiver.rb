@@ -47,7 +47,7 @@ class Denon::Amplifier::AvReceiver
         send_query(COMMANDS[:volume])
         send_query(COMMANDS[:mute])
         
-        @polling_timer = schedule.every('60s') do
+        schedule.every('60s') do
             logger.debug "-- Polling Denon AVR"
             power?(priority: 0)
             send_query(COMMANDS[:input], priority: 0)
@@ -55,8 +55,7 @@ class Denon::Amplifier::AvReceiver
     end
     
     def disconnected
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
     
     

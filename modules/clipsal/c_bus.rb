@@ -47,15 +47,14 @@ class Clipsal::CBus
 
     def connected
         send("|||\r", priority: 99)    # Ensure we are in smart mode
-        @polling_timer = schedule.every('60s') do
+        schedule.every('60s') do
             logger.debug "-- Polling CBUS"
             send("|||\r", priority: 0)    # Ensure we are in smart mode
         end
     end
 
     def disconnected
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
 
 

@@ -56,7 +56,7 @@ class Vaddio::Camera::Visca
     end
     
     def connected
-        @polling_timer = schedule.every('60s') do
+        schedule.every('60s') do
             logger.debug "-- Polling Vaddio Camera"
             power? do
                 if self[:power] == On
@@ -69,8 +69,7 @@ class Vaddio::Camera::Visca
     
     def disconnected
         # Disconnected will be called before connect if initial connect fails
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
 
 

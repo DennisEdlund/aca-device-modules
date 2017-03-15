@@ -27,7 +27,7 @@ class Planar::ClarityMatrix
 
     def connected
         do_poll
-        @polling_timer = schedule.every('60s') do
+        schedule.every('60s') do
             do_poll
         end
     end
@@ -37,8 +37,7 @@ class Planar::ClarityMatrix
         # Disconnected may be called without calling connected
         #   Hence the check if timer is nil here
         #
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
 
     def power?(options = {}, &block)

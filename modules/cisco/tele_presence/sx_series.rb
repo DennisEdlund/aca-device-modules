@@ -30,7 +30,7 @@ class Cisco::TelePresence::SxSeries < Cisco::TelePresence::SxTelnet
         do_send 'xConfiguration Standby Control: Off'
         call_status
         pip_mode?
-        @polling_timer = schedule.every('5s') do
+        schedule.every('5s') do
             logger.debug "-- Polling Cisco SX"
             call_status
 
@@ -46,8 +46,7 @@ class Cisco::TelePresence::SxSeries < Cisco::TelePresence::SxTelnet
     def disconnected
         super
 
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
 
 

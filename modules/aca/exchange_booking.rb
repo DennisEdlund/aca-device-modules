@@ -174,8 +174,8 @@ class Aca::ExchangeBooking
         end
 
         fetch_bookings
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = schedule.every(setting(:update_every) || '5m', method(:fetch_bookings))
+        schedule.clear
+        schedule.every(setting(:update_every) || '5m', method(:fetch_bookings))
     end
 
 

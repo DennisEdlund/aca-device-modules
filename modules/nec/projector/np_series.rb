@@ -97,7 +97,7 @@ class Nec::Projector::NpSeries
         #
         # Get the state every 50 seconds :)
         #
-        @polling_timer = schedule.every('50s') do
+        schedule.every('50s') do
             do_poll
         end
     end
@@ -106,8 +106,7 @@ class Nec::Projector::NpSeries
         #
         # Perform any cleanup functions here
         #
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
 
         # Disconnect often occurs on power off
         # We may have not received a status response before the disconnect occurs

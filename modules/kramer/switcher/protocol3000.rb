@@ -57,15 +57,14 @@ class Kramer::Switcher::Protocol3000
         login
         get_machine_info
 
-        @polling_timer = schedule.every('1m') do
+        schedule.every('1m') do
             logger.debug "-- Kramer Maintaining Connection"
             do_send('MODEL?', {:priority => 0})    # Low priority poll to maintain connection
         end
     end
 
     def disconnected
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
     
     

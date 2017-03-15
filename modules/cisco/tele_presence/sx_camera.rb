@@ -52,7 +52,7 @@ class Cisco::TelePresence::SxCamera < Cisco::TelePresence::SxTelnet
         super
 
         do_poll
-        @polling_timer = schedule.every('30s') do
+        schedule.every('30s') do
             logger.debug "-- Polling Camera"
             do_poll
         end
@@ -63,8 +63,7 @@ class Cisco::TelePresence::SxCamera < Cisco::TelePresence::SxTelnet
 
         super
 
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
 
 

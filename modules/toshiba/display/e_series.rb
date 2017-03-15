@@ -33,7 +33,7 @@ class Toshiba::Display::ESeries
     def connected
         @buffer = String.new
 
-        @polling_timer = schedule.every('30s') do
+        schedule.every('30s') do
             logger.debug "-- Polling Display"
             do_poll
         end
@@ -44,8 +44,7 @@ class Toshiba::Display::ESeries
         # Disconnected may be called without calling connected
         #    Hence the check if timer is nil here
         #
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
 
 

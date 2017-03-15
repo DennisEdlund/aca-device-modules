@@ -39,14 +39,13 @@ class ScreenTechnics::ConnectTcp
 
     def connected
         (1..@count).each { |index| query_state(index) }
-        @polling_timer = schedule.every('15s') {
+        schedule.every('15s') {
             (1..@count).each { |index| query_state(index) }
         }
     end
 
     def disconnected
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
 
     def state(new_state, index = 1)

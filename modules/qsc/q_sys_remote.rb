@@ -39,7 +39,7 @@ class Qsc::QSysRemote
     end
 
     def connected
-        @polling_timer = schedule.every('1m') do
+        schedule.every('1m') do
             logger.debug "Maintaining Connection"
             no_op
         end
@@ -54,8 +54,7 @@ class Qsc::QSysRemote
         # Disconnected may be called without calling connected
         #    Hence the check if timer is nil here
         #
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
 
 

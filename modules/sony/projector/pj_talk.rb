@@ -36,12 +36,11 @@ class Sony::Projector::PjTalk
     
 
     def connected
-        @polling_timer = schedule.every('60s', method(:do_poll))
+        schedule.every('60s', method(:do_poll))
     end
 
     def disconnected
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
     
     

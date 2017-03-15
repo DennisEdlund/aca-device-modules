@@ -20,15 +20,14 @@ class TvOne::Sx63x
     end
 
     def connected
-        @polling_timer = schedule.every('60s') do
+        schedule.every('60s') do
             logger.debug "Ensuring TVOne switcher is on"
             power true
         end
     end
     
     def disconnected
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
 
     def power(state)

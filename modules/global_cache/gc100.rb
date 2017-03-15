@@ -31,7 +31,7 @@ class GlobalCache::Gc100
         self[:config_indexed] = false
         getdevices
         
-        @polling_timer = schedule.every('10s') do
+        schedule.every('10s') do
             logger.debug "-- Polling GC100"
             getdevices unless self[:config_indexed]
             
@@ -40,8 +40,7 @@ class GlobalCache::Gc100
     end
     
     def disconnected
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
 
 

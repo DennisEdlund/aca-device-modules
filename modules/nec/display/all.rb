@@ -70,7 +70,7 @@ class Nec::Display::All
     def connected
         do_poll
 
-        @polling_timer = schedule.every('50s') do
+        schedule.every('50s') do
             logger.debug "-- Polling Display"
             do_poll
         end
@@ -81,8 +81,7 @@ class Nec::Display::All
         # Disconnected may be called without calling connected
         #    Hence the check if timer is nil here
         #
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
 
 

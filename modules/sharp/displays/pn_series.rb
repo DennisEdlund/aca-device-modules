@@ -76,7 +76,7 @@ class Sharp::Displays::PnSeries
         # Will be sent after login is requested (config - wait ready)
         send_credentials
 
-        @polling_timer = schedule.every('60s') do
+        schedule.every('60s') do
             logger.debug "-- Polling Display"
             do_poll
         end
@@ -87,8 +87,7 @@ class Sharp::Displays::PnSeries
         # Disconnected may be called without calling connected
         #    Hence the check if timer is nil here
         #
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
 
 

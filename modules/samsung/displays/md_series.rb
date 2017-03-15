@@ -60,7 +60,7 @@ DESC
 
         do_poll
 
-        @polling_timer = schedule.every('30s') do
+        schedule.every('30s') do
             logger.debug "-- Polling Display"
             do_poll
         end
@@ -72,8 +72,7 @@ DESC
         #   Hence the check if timer is nil here
         #
         self[:power] = false  # As we may need to use wake on lan
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
 
 

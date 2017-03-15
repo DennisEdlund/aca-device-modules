@@ -29,15 +29,14 @@ class Aca::Crestron::DmSwitcherInterface
         send("status\xff", wait: true)
 
         # Maintain connection
-        @polling_timer = schedule.every('61s') do
+        schedule.every('61s') do
             logger.debug "-- Polling Crestron"
             send("status\xff", wait: true)
         end
     end
     
     def disconnected
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
 
 

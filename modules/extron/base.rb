@@ -23,7 +23,7 @@ class Extron::Base
     def connected
         return if @disable_polling
 
-        @polling_timer = schedule.every('1m') do
+        schedule.every('1m') do
             logger.debug "Extron Maintaining Connection"
             send('Q', :priority => 0, :wait => false)    # Low priority poll to maintain connection
         end
@@ -42,8 +42,7 @@ class Extron::Base
         # Disconnected may be called without calling connected
         #    Hence the check if timer is nil here
         #
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
 
     def direct(string)

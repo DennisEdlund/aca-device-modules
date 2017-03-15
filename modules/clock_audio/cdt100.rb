@@ -27,7 +27,7 @@ class ClockAudio::Cdt100
     def connected
         #start_async
         do_poll
-        @polling_timer = schedule.every('60s') do
+        schedule.every('60s') do
             logger.debug "-- Polling Mics"
             do_poll
         end

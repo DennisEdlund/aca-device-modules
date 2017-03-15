@@ -41,14 +41,13 @@ class Symetrix::Composer
         push  # Push all value changes
         
         # Maintain the connection
-        @polling_timer = schedule.every('60s') do
+        schedule.every('60s') do
             nop({ priority: 0 })
         end
     end
     
     def disconnected
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
     
     

@@ -45,15 +45,14 @@ class Amx::Svsi::NSeriesSwitcher
         end
 
         # Low priority poll to maintain connection
-        @polling_timer = schedule.every('50s') do
+        schedule.every('50s') do
             logger.debug '-- Maintaining Connection --'
             monitornotify @list.first, priority: 0
         end
     end
 
     def disconnected
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
 
 

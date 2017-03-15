@@ -28,7 +28,7 @@ class TvOne::CorioMaster
     end
 
     def connected
-        @polling_timer = schedule.every('60s') do
+        schedule.every('60s') do
             do_poll
         end
 
@@ -37,8 +37,7 @@ class TvOne::CorioMaster
 
     def disconnected
         # Disconnected will be called before connect if initial connect fails
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
 
     def login

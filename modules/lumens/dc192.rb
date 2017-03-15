@@ -33,15 +33,14 @@ class Lumens::Dc192
 	
 	def connected
 		do_poll
-		@polling_timer = schedule.every('60s') do
+		schedule.every('60s') do
 			logger.debug "-- Polling Lumens DC Series Visualiser"
 			do_poll
 		end
 	end
 	
 	def disconnected
-		@polling_timer.cancel unless @polling_timer.nil?
-		@polling_timer = nil
+		schedule.clear
 	end
 	
 	

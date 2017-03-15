@@ -26,15 +26,14 @@ class Embedia::ControlPoint
     end
 
     def connected
-        @polling_timer = schedule.every('50s') do
+        schedule.every('50s') do
             logger.debug "Maintaining connection"
             query_sensor 0
         end
     end
     
     def disconnected
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
 
     Commands = {

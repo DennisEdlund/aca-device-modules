@@ -55,7 +55,7 @@ class Biamp::Tesira
         end
         do_send "SESSION set verbose false", priority: 96
         
-        @polling_timer = schedule.every('60s') do
+        schedule.every('60s') do
             do_send "DEVICE get serialNumber", priority: 0
         end
     end
@@ -64,8 +64,7 @@ class Biamp::Tesira
         # Ensures the buffer is cleared
         new_telnet_client
 
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
     
     

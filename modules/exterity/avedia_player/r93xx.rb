@@ -61,7 +61,7 @@ class Exterity::AvediaPlayer::R93xx
             delimiter: '!'
         })
 
-        @polling_timer = schedule.every('60s') do
+        schedule.every('60s') do
             logger.debug '-- Polling Exterity Player'
             tv_info
         end
@@ -71,8 +71,7 @@ class Exterity::AvediaPlayer::R93xx
         # Ensures the buffer is cleared
         new_telnet_client
 
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
 
 

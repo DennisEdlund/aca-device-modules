@@ -30,7 +30,7 @@ class Bss::Blu100
 
     def connected
         subscribe_percent(1, 60000)
-        @polling_timer = schedule.every('150s') do  # Every 2.5 min
+        schedule.every('150s') do  # Every 2.5 min
             subscribe_percent(1, 60000)             # Request the level of Hybrid I/O Card A
         end                                         # This works to maintain the connection
     end
@@ -40,8 +40,7 @@ class Bss::Blu100
         # Disconnected may be called without calling connected
         #   Hence the check if timer is nil here
         #
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
 
 

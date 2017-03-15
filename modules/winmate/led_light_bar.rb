@@ -60,15 +60,14 @@ class Winmate::LedLightBar
         @buffer = String.new
 
         do_poll
-        @polling_timer = schedule.every('50s') do
+        schedule.every('50s') do
             logger.debug "-- Polling Winmate LED"
             do_poll
         end
     end
 
     def disconnected
-        @polling_timer.cancel unless @polling_timer.nil?
-        @polling_timer = nil
+        schedule.clear
     end
 
 
