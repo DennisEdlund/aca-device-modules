@@ -30,6 +30,7 @@ class Extron::UsbExtenderPlus::Endpoint
 
 
     def on_load
+        self[:joined_to] = []
         on_update
     end
 

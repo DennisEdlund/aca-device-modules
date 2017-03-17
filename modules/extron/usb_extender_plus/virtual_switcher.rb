@@ -61,12 +61,16 @@ class Extron::UsbExtenderPlus::VirtualSwitcher
                 devs.each do |dev|
                     device = devices[dev.to_s]
                     if device
-                        # Unjoin performs the join query
-                        host_mac = device[:joined_to][0]
-                        if host_mac
-                            wait << device.unjoin_all.then do
-                                unjoin_previous_host(host_mac, device[:mac_address])
+                        begin
+                            # Unjoin performs the join query
+                            host_mac = device[:joined_to][0]
+                            if host_mac
+                                wait << device.unjoin_all.then do
+                                    unjoin_previous_host(host_mac, device[:mac_address])
+                                end
                             end
+                        rescue => e
+                            logger.print_error e, "failed to unjoin from previous host"
                         end
                     else
                         logger.warn "unable to switch - device #{dev} not found!"
@@ -79,7 +83,11 @@ class Extron::UsbExtenderPlus::VirtualSwitcher
                     devs.each do |dev|
                         device = devices[dev.to_s]
                         if device
-                            wait << perform_join(host_actual, device)
+                            begin
+                                wait << perform_join(host_actual, device)
+                            rescue => e
+                                logger.print_error e, "unable to switch due to error"
+                            end
                         else
                             logger.warn "unable to switch - device #{dev} not found!"
                         end
