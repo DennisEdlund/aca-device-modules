@@ -348,7 +348,7 @@ class Aca::ExchangeBooking
 
         req_params = {}
         req_params[:room_email] = @ews_room
-        req_params[:title] = options[:title]
+        req_params[:subject] = options[:title]
         req_params[:start_time] = Time.at(options[:start].to_i / 1000).utc.iso8601.chop
         req_params[:end_time] = Time.at(options[:end].to_i / 1000).utc.iso8601.chop
 
@@ -369,6 +369,7 @@ class Aca::ExchangeBooking
             end
         }.then(proc { |id|
             logger.debug { "successfully created booking: #{id}" }
+            "Ok"
         }, proc { |error|
             logger.print_error error, 'creating ad hoc booking'
             thread.reject error # propogate the error
