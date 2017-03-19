@@ -69,7 +69,7 @@ class Biamp::Tesira
     
     
     def preset(number_or_name)
-        if [Fixnum, Integer].include? number_or_name.class
+        if number_or_name.is_a? Integer
             do_send "DEVICE recallPreset #{number_or_name}"
         else
             do_send build(:DEVICE, :recallPresetByName, number_or_name)

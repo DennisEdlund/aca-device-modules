@@ -76,7 +76,7 @@ class Exterity::AvediaPlayer::R93xx
 
 
     def channel(number, _ = nil)
-        if [Integer, Fixnum].include? number.class
+        if number.is_a? Integer
             set :playChannelNumber, number
         else
             stream number
