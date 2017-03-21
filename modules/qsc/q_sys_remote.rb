@@ -129,6 +129,69 @@ class Qsc::QSysRemote
     end
 
 
+    # -------------
+    # Change Groups
+    # -------------
+    def change_group_add_controls(group_id, *controls, **options)
+        params = {
+            :Id => group_id,
+            :Controls => controls
+        }
+
+        do_send(next_id, cmd: :"ChangeGroup.AddControl", params: params, **options)
+    end
+
+    def change_group_remove_controls(group_id, *controls, **options)
+        params = {
+            :Id => group_id,
+            :Controls => controls
+        }
+
+        do_send(next_id, cmd: :"ChangeGroup.Remove", params: params, **options)
+    end
+
+    def change_group_add_component(group_id, component_name, *controls, **options)
+        controls.collect! do |ctrl|
+            {
+                :Name => ctrl
+            }
+        end
+
+        do_send(next_id, cmd: :"ChangeGroup.AddComponentControl", params: {
+            :Id => group_id,
+            :Component => {
+                :Name => component_name,
+                :Controls => controls
+            }
+        }, **options)
+    end
+
+    # Returns values for all the controls
+    def poll_change_group(group_id, **options)
+        do_send(next_id, cmd: :"ChangeGroup.Poll", params: {:Id => group_id}, **options)
+    end
+
+    # Removes the change group
+    def destroy_change_group(group_id, **options)
+        do_send(next_id, cmd: :"ChangeGroup.Destroy", params: {:Id => group_id}, **options)
+    end
+
+    # Removes all controls from change group
+    def clear_change_group(group_id, **options)
+        do_send(next_id, cmd: :"ChangeGroup.Clear", params: {:Id => group_id}, **options)
+    end
+
+    # Where every is the number of seconds between polls
+    def auto_poll_change_group(group_id, every, **options)
+        params = {
+            :Id => group_id,
+            :Rate => every
+        }
+        options[:wait] = false
+        do_send(next_id, cmd: :"ChangeGroup.AutoPoll", params: params, **options)
+    end
+
+
     # --------------
     # MIXER CONTROLS
     # --------------
@@ -236,7 +299,7 @@ class Qsc::QSysRemote
 
 
     protected
-    
+
 
     def next_id
         @id += 1
