@@ -414,8 +414,6 @@ class Aca::MeetingRoom < Aca::Joiner
                             end
                         end
                     end
-                else
-                    logger.warn "unabled to find current mode #{mode_name}\n#{@modes.inspect}"
                 end
             rescue => e
                 logger.print_error e, 'during mode breakdown'
