@@ -104,6 +104,7 @@ class Aca::MeetingRoom < Aca::Joiner
             @sharing_output = self[:outputs].keys.first
 
             # Grab lighting presets
+            self[:lights_events] = setting(:lights_events)
             self[:lights] = setting(:lights)
             @light_mapping = {}
             if self[:lights]
@@ -187,8 +188,11 @@ class Aca::MeetingRoom < Aca::Joiner
             # Shutdown schedule
             # Every night at 11:30pm shutdown the systems if they are on
             schedule.clear
-            schedule.cron(setting(:shutdown_time) || '30 23 * * *') do
-                shutdown
+            time = setting(:shutdown_time)
+            unless is_negatory?(time)
+                schedule.cron(time || '30 23 * * *') do
+                    shutdown
+                end
             end
 
             time = setting(:startup_time)
@@ -386,6 +390,41 @@ class Aca::MeetingRoom < Aca::Joiner
 
         return unless @modes
 
+        # ======================================================
+        # Check if we want undo anything the previous mode setup
+        # ======================================================
+        current_mode = self[:current_mode]
+        if current_mode && current_mode != mode_name.to_s
+            begin
+                mode = @modes[current_mode]
+                if mode && mode[:breakdown]
+                    bd = mode[:breakdown]
+
+                    if bd[:audio_preset]
+                        mixer = sys[:Mixer]
+                        Array(bd[:audio_preset]).each { |preset| mixer.trigger(preset) }
+                    end
+                    sys[:Switcher].switch(bd[:routes]) if bd[:routes]
+                    if bd[:execute]
+                        bd[:execute].each do |cmd|
+                            begin
+                                system.get_implicit(cmd[:module]).method_missing(cmd[:func], *cmd[:args])
+                            rescue => e
+                                logger.print_error e, 'executing mode change'
+                            end
+                        end
+                    end
+                else
+                    logger.warn "unabled to find current mode #{mode_name}\n#{@modes.inspect}"
+                end
+            rescue => e
+                logger.print_error e, 'during mode breakdown'
+            end
+        end
+
+        # ====================
+        # Move to the new mode
+        # ====================
         mode = @modes[mode_name.to_s]
         if mode
             # Update the outputs
@@ -395,6 +434,16 @@ class Aca::MeetingRoom < Aca::Joiner
 
             self[:outputs] = ActiveSupport::HashWithIndifferentAccess.new.deep_merge(mode_outs.merge(default_outs))
             @original_outputs = self[:outputs].deep_dup
+
+            if respond_to? :switch_mode_custom
+                begin
+                    switch_mode_custom(mode)
+                rescue => e
+                    logger.print_error e, 'applying custom mode settings'
+                end
+            end
+
+            self[:mics] = mode[:mics] || setting(:mics)
             self[:current_mode] = mode_name
             self[:current_cog_mode] = mode[:cog_label]
             define_setting(:current_mode, self[:current_mode])
@@ -418,7 +467,10 @@ class Aca::MeetingRoom < Aca::Joiner
                 powerup unless setting(:ignore_modes) || booting
             ensure
                 sys = system
-                sys[:Mixer].trigger(mode[:audio_preset]) if mode[:audio_preset]
+                if mode[:audio_preset]
+                    mixer = sys[:Mixer]
+                    Array(mode[:audio_preset]).each { |preset| mixer.trigger(preset) }
+                end
                 sys[:Switcher].switch(mode[:routes]) if mode[:routes]
                 sys[:Lighting].trigger(@light_group, mode[:light_preset]) if mode[:light_preset]
                 sys[:VideoWall].preset(mode[:videowall_preset]) if mode[:videowall_preset]
