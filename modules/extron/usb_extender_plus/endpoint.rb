@@ -138,8 +138,9 @@ class Extron::UsbExtenderPlus::Endpoint
                 query_joins
             when '2f03f4a2020000000308'
                 # I think this is what this is.. just a guess
-                logger.debug 'join/unjoin failed.. retrying'
-                return :retry
+                logger.debug 'join/unjoin might have failed..'
+                query_joins
+                #return :retry
             else
                 logger.info "Unknown response from extron: #{resp}"
             end
