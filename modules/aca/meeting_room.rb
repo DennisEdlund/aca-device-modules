@@ -80,15 +80,18 @@ class Aca::MeetingRoom < Aca::Joiner
                 end
 
                 # Load the current mode from the database (in case of system crash)
-                self[:current_mode] = setting(:current_mode) unless self[:current_mode]
-                if self[:current_mode]
-                    switch_mode(self[:current_mode], booting: true)
-                    begin
-                        self[:current_cog_mode] = @modes[self[:current_mode]][:cog_label]
-                    rescue => e
+                if self[:current_mode].nil?
+                    self[:current_mode] = setting(:current_mode)
+                    if self[:current_mode]
+                        switch_mode(self[:current_mode], booting: true)
+                        begin
+                            self[:current_cog_mode] = @modes[self[:current_mode]][:cog_label]
+                        rescue => e
+                        end
+                    else
+                        self[:outputs] = ActiveSupport::HashWithIndifferentAccess.new.deep_merge(@original_outputs)
+                        self[:mics] = setting(:mics)
                     end
-                else
-                    self[:outputs] = ActiveSupport::HashWithIndifferentAccess.new.deep_merge(@original_outputs)
                 end
             else
                 # We don't want to break things on update if inputs define audio settings
@@ -98,9 +101,9 @@ class Aca::MeetingRoom < Aca::Joiner
                 self[:modes] = nil
                 self[:cog_modes] = nil
                 self[:current_mode] = nil
+                self[:mics] = setting(:mics)
             end
 
-            self[:mics] = setting(:mics)
             @sharing_output = self[:outputs].keys.first
 
             # Grab lighting presets
