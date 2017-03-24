@@ -47,20 +47,24 @@ DESC
 
         # Subscribe to source updates and relayer on change
         @subscriptions = bindings.map do |display, window|
-                system.subscribe(:System, 1, display) do |notice|
-                        logger.debug { "Restacking #{display} linked windows due to source change" }
-                        source = notice.value[:source]
-                        restack window, source
-                end
+            system.subscribe(:System, 1, display) do |notice|
+                logger.debug { "Restacking #{display} linked windows due to source change" }
+                source = notice.value[:source]
+                restack window, source
+            end
         end
 
         # Also restack after a videowall preset recall
         @subscriptions << system.subscribe(:VideoWall, @videowall, :preset) do |notice|
-                logger.debug "Restacking all videowall windows due to preset change"
-                bindings.each do |display, window|
-                        source = system[:System][display][:source]
-                        restack window, source
+            logger.debug "Restacking all videowall windows due to preset change"
+            bindings.each do |display, window|
+                begin
+                    source = system[:System][display][:source]
+                    restack window, source
+                rescue
+                    logger.warn "could not find active source for #{display}"
                 end
+            end
         end
     end
 
@@ -71,9 +75,14 @@ DESC
     def relayer(window, source); end
 
     def restack(window, source)
-        z_index = source == :none ? @hide : @show
-        [*window].each do |id|
-            system.get(:VideoWall, @videowall).window id, "Zorder", z_index
+        wallController = system.get(:VideoWall, @videowall)
+        if wallController.respond_to? :window
+            z_index = source == :none ? @hide : @show
+            [*window].each do |id|
+                wallController.window id, "Zorder", z_index
+            end
+        else
+            logger.warn "window restacking not supported with VideoWall_#{@videowall}"
         end
     end
 
