@@ -16,9 +16,6 @@ class Hitachi::Projector::CpTwSeriesBasic
     descriptive_name 'Hitachi CP-TW Projector (no auth)'
     generic_name :Display
 
-    # Communication settings
-    tokenize indicator: "\xBE\xEF", msg_length: 11
-
     # Response time is slow
     # and as a make break device it may take time
     # to acctually setup the connection with the projector
@@ -42,13 +39,17 @@ class Hitachi::Projector::CpTwSeriesBasic
     end
 
     def connected
-        power? priority: 0
-        input? priority: 0
+        power?(priority: 0).then do
+            if self[:power] == On
+                input? priority: 0
+                audio_mute? priority: 0
+                picture_mute? priority: 0
+                freeze? priority: 0
+            end
+        end
+
         lamp? priority: 0
         filter? priority: 0
-        audio_mute? priority: 0
-        picture_mute? priority: 0
-        freeze? priority: 0
         error? priority: 0
 
         schedule.every('20s') do
@@ -70,6 +71,8 @@ class Hitachi::Projector::CpTwSeriesBasic
 
     def disconnected
         schedule.clear
+        @recover_power = nil
+        @recover_input = nil
     end
 
 
@@ -80,13 +83,12 @@ class Hitachi::Projector::CpTwSeriesBasic
             logger.debug "-- requested to power on"
             self[:power_target] = On
             do_send "BA D2 01 00 00 60 01 00", name: :power
-            power?
         else
             logger.debug "-- requested to power off"
             self[:power_target] = Off
             do_send "2A D3 01 00 00 60 00 00", name: :power
-            power?
         end
+        power?
     end
 
     INPUTS = {
@@ -98,14 +100,16 @@ class Hitachi::Projector::CpTwSeriesBasic
         self[:stable_input] = false
         self[:input_target] = inps
         do_send INPUTS[inps], name: :input
+        input?
     end
 
     def mute(state = true)
         if is_affirmative?(state)
-            do_send "6E F1 01 00 A0 20 01 00"
+            do_send "6E F1 01 00 A0 20 01 00", name: :mute
         else
-            do_send "FE F0 01 00 A0 20 00 00"
+            do_send "FE F0 01 00 A0 20 00 00", name: :mute
         end
+        picture_mute?
     end
 
     def unmute
@@ -114,10 +118,11 @@ class Hitachi::Projector::CpTwSeriesBasic
 
     def mute_audio(state = true)
         if is_affirmative?(state)
-            do_send "D6 D2 01 00 02 20 01 00"
+            do_send "D6 D2 01 00 02 20 01 00", name: :mute_audio
         else
-            do_send "46 D3 01 00 02 20 00 00"
+            do_send "46 D3 01 00 02 20 00 00", name: :mute_audio
         end
+        audio_mute?
     end
 
 
@@ -140,10 +145,12 @@ class Hitachi::Projector::CpTwSeriesBasic
 
     def lamp_hours_reset
         do_send('58 DC 06 00 30 70 00 00')
+        lamp?
     end
 
     def filter_hours_reset
         do_send('98 C6 06 00 40 70 00 00')
+        filter?
     end
 
     
@@ -156,6 +163,22 @@ class Hitachi::Projector::CpTwSeriesBasic
         0x1c => :error,
         0x1d => :data,
         0x1f => :busy
+    }
+
+    InputCodes = {
+        0x03 => :hdmi,
+        0x0d => :hdmi2
+    }
+
+    ErrorCodes = {
+        0x0 => 'normal',
+        0x1 => 'cover error',
+        0x2 => 'fan error',
+        0x3 => 'lamp error',
+        0x4 => 'temp error',
+        0x5 => 'air flow error',
+        0x7 => 'cold error',
+        0x8 => 'filter error'
     }
 
     def received(data, resolve, command)
@@ -175,28 +198,50 @@ class Hitachi::Projector::CpTwSeriesBasic
             if command
                 case command[:query]
                 when :power?
-                    self[:power] = resp[1] == 0
+                    self[:power] = resp[1] == 1
                     self[:cooling] = resp[1] == 2
 
                     if self[:power] == self[:power_target]
                         self[:stable_power] = true
-                    elsif not self[:stable_power]
+                    elsif !self[:stable_power] && @recover_power.nil?
                         logger.debug "recovering power state #{self[:power]} != target #{self[:power_target]}"
-                        power(self[:power_target])
+                        @recover_power = schedule.in('3s') do
+                            @recover_power = nil
+                            power(self[:power_target])
+                        end
                     end
                 when :input?
+                    self[:input] = InputCodes[resp[1]] || :unknown
 
+                    if self[:input] == self[:input_target]
+                        self[:stable_input] = true
+                    elsif !self[:stable_input] && @recover_input.nil?
+                        logger.debug "recovering input #{self[:input]} != target #{self[:input_target]}"
+                        @recover_input = schedule.in('3s') do
+                            @recover_input = nil
+                            switch_to(self[:input_target])
+                        end
+                    end
                 when :error?
+                    self[:error_status] = ErrorCodes[resp[1]] || :unknown
                 when :freeze?
+                    self[:frozen] = resp[1] == 1
                 when :audio_mute?
+                    self[:audio_mute] = resp[1] == 1
                 when :picture_mute?
+                    self[:mute] = resp[1] == 1
                 when :lamp?
+                    self[:lamp] = resp[1] + (resp[2] << 8)
                 when :filter?
+                    self[:filter] = resp[1] + (resp[2] << 8)
                 else
                     logger.warn "unknown command query: #{command[:query]}"
                 end
+
+                :success
             else
                 logger.warn "data received for unknown command"
+                :abort
             end
         when :busy
             if resp[1] == 0x04 && resp[2] == 0x00
@@ -212,7 +257,7 @@ class Hitachi::Projector::CpTwSeriesBasic
     def do_send(data, **options)
         cmd = "BEEF030600 #{data}"
         options[:hex_string] = true
-        logger.debug { "sent \"0x#{cmd}\" name: #{options[:name]}" }
+        logger.debug { "requesting \"0x#{cmd}\" name: #{options[:name]}" }
         send cmd, options
     end
 end
