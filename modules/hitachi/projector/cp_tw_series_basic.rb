@@ -28,6 +28,7 @@ class Hitachi::Projector::CpTwSeriesBasic
 
         # Stable by default (allows manual on and off)
         self[:stable_power] = true
+        self[:stable_input] = true
 
         # Meta data for inquiring interfaces
         self[:type] = :projector
