@@ -18,6 +18,7 @@ class Aca::TelevisionLogic
     def on_update
         @start_channel = setting(:start_channel)
         @tv_input = setting(:tv_input) || :hdmi
+        @module = setting(:tv_mod)
 
         # Update the Schedules
         begin
@@ -57,7 +58,12 @@ class Aca::TelevisionLogic
         chan_id << @box_id if @box_id
 
         if chan_id[0]
-            system.all(:IPTV).channel(*chan_id)
+            if @module
+                system.get_implicit(@module).channel(*chan_id)
+            else
+                system.all(:IPTV).channel(*chan_id)
+            end
+
             self[:channelName] = channel
             define_setting(:start_channel, channel) if save
         else
