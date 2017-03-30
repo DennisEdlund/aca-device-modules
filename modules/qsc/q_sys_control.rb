@@ -101,7 +101,9 @@ class Qsc::QSysControl
 
     # Used to set a dial number / string
     def set_string(control_id, text)
-        send "css #{control_id} \"#{text}\"\n"
+        send("css #{control_id} \"#{text}\"\n").then do
+            self[control_id] = text
+        end
     end
 
     # Used to trigger dialing etc
