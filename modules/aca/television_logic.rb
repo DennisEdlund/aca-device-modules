@@ -20,29 +20,31 @@ class Aca::TelevisionLogic
         @tv_input = setting(:tv_input) || :hdmi
         @module = setting(:tv_mod)
 
-        # Update the Schedules
-        begin
-            # Startup schedule
-            schedule.clear
-            time = setting(:power_on_time)
-            if time
-                schedule.cron(time) do
-                    logger.info "powering ON displays in system #{system.name}"
-                    power_on_displays
-                    goto(@start_channel, false) if @start_channel
+        # Update the Schedules if running as a standalone TV system
+        unless system.exists? :System
+            begin
+                # Startup schedule
+                schedule.clear
+                time = setting(:power_on_time) || setting(:startup_time)
+                if time
+                    schedule.cron(time) do
+                        logger.info "powering ON displays in system #{system.name}"
+                        power_on_displays
+                        goto(@start_channel, false) if @start_channel
+                    end
                 end
-            end
 
-            # Poweroff schedule
-            time = setting(:power_off_time)
-            if time
-                schedule.cron(time) do
-                    logger.info "powering OFF (hard) displays in system #{system.name}"
-                    power_off_displays
+                # Poweroff schedule
+                time = setting(:power_off_time) || setting(:shutdown_time)
+                if time
+                    schedule.cron(time) do
+                        logger.info "powering OFF (hard) displays in system #{system.name}"
+                        power_off_displays
+                    end
                 end
+            rescue => e
+                logger.print_error(e, 'bad cron schedule configuration')
             end
-        rescue => e
-            logger.print_error(e, 'bad cron schedule configuration')
         end
 
         @box_id = setting(:box_id)
