@@ -12,17 +12,13 @@ class Amx::Svsi::VirtualVideowall
     implements :logic
 
 description <<-DESC
-This module may be used to define, and recall, videowall windowing layouts
-for SVSI decoders in a system. Layouts should be defined under the
-`videowall_presets` key and each may contain an arbitary number of windows.
+This module may be used to define, and recall, videowall windowing layouts for SVSI decoders in a system. Layouts should be defined under the `videowall_presets` key and each may contain an arbitary number of windows.
 
-Each window definition can be formed of any available decoders, positioned
-within a 2D array. A scaling mode (either `auto`, `fit`, or `stretch`) may
-also optionally be defined.
+Each window definition can be formed of any available decoders, positioned within a 2D array. A scaling mode (either `auto`, `fit`, or `stretch`) may also optionally be defined.
 
 ```
 {
-    "videowall_presets" {
+    "videowall_presets": {
         "dual": [
             {
                 "scale": "auto",
@@ -38,7 +34,7 @@ also optionally be defined.
                     [7, 8]
                 ]
             }
-        },
+        ],
         "centered": [
             {
                 "scale": "auto",
