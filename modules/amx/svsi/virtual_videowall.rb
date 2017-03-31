@@ -67,7 +67,7 @@ DESC
     end
 
     def on_update
-        @presets = settings(:videowall_presets)
+        @presets = setting(:videowall_presets)
     end
 
 
