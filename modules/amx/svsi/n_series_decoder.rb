@@ -152,8 +152,8 @@ class Amx::Svsi::NSeriesDecoder
     end
 
     def videowall_position(x, y)
-        do_send 'setSettings', 'wallMonPosH', x
-        do_send 'setSettings', 'wallMonPosV', y
+        do_send 'setSettings', 'wallMonPosV', x
+        do_send 'setSettings', 'wallMonPosH', y
     end
 
     VIDEOWALL_SCALING_MODES = [
