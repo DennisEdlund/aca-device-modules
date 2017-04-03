@@ -23,10 +23,10 @@ Orchestrator::Testing.mock_device 'Extron::Switcher::Dxp' do
     expect(result).to eq({1 => 3, 4 => 2})
 
     # Check status
-    expect(status[:audio3]).to be(1)
+    expect(status[:video3]).to be(1)
     expect(status[:audio3]).to be(1)
 
-    expect(status[:audio4]).to be(2)
+    expect(status[:video4]).to be(2)
     expect(status[:audio4]).to be(2)
 
 end
