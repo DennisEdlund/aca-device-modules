@@ -92,7 +92,7 @@ Settings:
     end
 
     def send_query(num)
-        logger.debug { "Requesting value of #{index}" }
+        logger.debug { "Requesting value of #{num}" }
         req = @os.status(num).to_binary_s
         send req, wait: true
     end
