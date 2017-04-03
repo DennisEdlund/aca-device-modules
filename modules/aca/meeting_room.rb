@@ -463,6 +463,12 @@ class Aca::MeetingRoom < Aca::Joiner
             end
             self[:inputs] = inps
 
+            unless booting
+                difference.each do |display|
+                    video_mute(display)
+                end
+            end
+
             # Power on the system and apply any custom presets
             begin
                 powerup unless setting(:ignore_modes) || booting
@@ -487,11 +493,6 @@ class Aca::MeetingRoom < Aca::Joiner
                 end
             end
 
-            unless booting
-                difference.each do |display|
-                    video_mute(display)
-                end
-            end
         else
             logger.warn "unabled to find mode #{mode_name} -- bad request?\n#{@modes.inspect}"
         end
