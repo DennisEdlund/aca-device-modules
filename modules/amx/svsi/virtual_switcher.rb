@@ -53,11 +53,13 @@ class Amx::Svsi::VirtualSwitcher
         encoders = get_system_modules(:Encoder)
         decoders = get_system_modules(:Decoder)
 
-        signal_map.each do |input, outputs|
-            if input == 0
+        signal_map.each do |inp, outputs|
+            input = inp.to_s
+
+            if input == '0'
                 stream = 0  # disconnect
             else
-                encoder = encoders[input.to_s]
+                encoder = encoders[input]
                 unless encoder.nil?
                     stream = encoder[:stream_id]
                 else
@@ -66,7 +68,7 @@ class Amx::Svsi::VirtualSwitcher
                 end
             end
 
-            [*outputs].each do |output|
+            Array(outputs).each do |output|
                 decoder = decoders[output.to_s]
                 unless decoder.nil?
                     connect_method.call(decoder, stream)
