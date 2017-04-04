@@ -6,7 +6,7 @@ Orchestrator::Testing.mock_device 'Extron::Switcher::Dxp' do
 
     # Information request
     should_send 'I'
-    responds "model name\r\n"
+    responds "M12X12 M12X12\r\n"
 
     # Enable verbose mode
     should_send "\e3CV\r"
