@@ -25,7 +25,8 @@ class Aca::TelevisionLogic
             begin
                 # Startup schedule
                 schedule.clear
-                time = setting(:power_on_time) || setting(:startup_time)
+                time = setting(:power_on_time)
+                time = setting(:startup_time) if time.nil?
                 if time
                     schedule.cron(time) do
                         logger.info "powering ON displays in system #{system.name}"
@@ -35,7 +36,8 @@ class Aca::TelevisionLogic
                 end
 
                 # Poweroff schedule
-                time = setting(:power_off_time) || setting(:shutdown_time)
+                time = setting(:power_off_time)
+                time = setting(:shutdown_time) if time.nil?
                 if time
                     schedule.cron(time) do
                         logger.info "powering OFF (hard) displays in system #{system.name}"
