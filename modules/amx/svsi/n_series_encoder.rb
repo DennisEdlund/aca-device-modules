@@ -1,3 +1,6 @@
+require 'set'
+
+
 module Amx; end
 module Amx::Svsi; end
 
@@ -41,6 +44,59 @@ class Amx::Svsi::NSeriesEncoder
         do_send 'getStatus', priority: 0
     end
 
+    Inputs = {
+        hdmi: 'hdmionly',
+        vga: 'vgaonly',
+        hdmivga: 'hdmivga',
+        vgahdmi: 'vgahdmi'
+    }
+    def switch_to(input, **options)
+        source = Inputs[input.to_sym] || input.to_s
+        do_send 'vidsrc', source, **options
+    end
+
+    # Supports: live, 1-8 (local)
+    Modes = Set.new(['1', '2', '3', '4', '5', '6', '7', '8'])
+    def media_source(mode)
+        the_mode = modes.to_s
+        if the_mode == 'live'
+            do_send 'live'
+        elsif Modes.include? the_mode
+            do_send 'local', the_mode
+        else
+            raise "invalid mode #{the_mode}"
+        end
+    end
+
+
+    def mute(state = true)
+        if is_affirmative?(state)
+            do_send 'txdisable'
+        else
+            do_send 'txenable'
+        end
+    end
+    alias_method :mute_video, :mute
+
+    def unmute
+        mute(false)
+    end
+    alias_method :unmute_video, :unmute
+
+
+    def mute_audio(state = true)
+        if is_affirmative?(state)
+            do_send 'mute'
+        else
+            do_send 'unmute'
+        end
+    end
+
+    def unmute_audio
+        mute_audio(false)
+    end
+
+
 
     protected
 
@@ -55,6 +111,14 @@ class Amx::Svsi::NSeriesEncoder
         stream: {
             status_variable: :stream_id,
             transform: -> (x) { x.to_i }
+        },
+        playmode: {
+            status_variable: :mute,
+            transform: -> (x) { x == 'off' }
+        },
+        mute: {
+            status_variable: :audio_mute,
+            transform: -> (x) { x == '1' }
         }
     }
     def received(data, deferrable, command)
