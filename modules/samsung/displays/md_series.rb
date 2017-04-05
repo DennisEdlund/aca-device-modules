@@ -158,7 +158,8 @@ DESC
         :dtv => 0x40,
         :media => 0x60,
         :widi => 0x61,
-        :magic_info => 0x20
+        :magic_info => 0x20,
+        :whiteboard => 0x64
     }
     INPUTS.merge!(INPUTS.invert)
 
