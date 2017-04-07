@@ -35,11 +35,11 @@ class Extron::Iplt < Extron::Base
             when :Cpn   #Relay or IO status. Example:
                         #Cpn1 Sio0
                         #012345678
-                case data[5..7]
+                case data[5..7].to_sym
                 when :Rly
-                    self["relay#{data[3].to_i}"] = data[8].to_i
+                    self["relay#{data[3].to_i}"] = !data[8].to_i.zero? # String to int (0/1) to bool
                 when :Sio
-                    self["io#{data[3].to_i}"] = data[8].to_i
+                    self["io#{data[3].to_i}"] = !data[8].to_i.zero?
                 else
                     logger.info "Unrecognised response: #{data}"
                 end

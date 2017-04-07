@@ -17,7 +17,7 @@ Orchestrator::Testing.mock_device 'Extron::Iplt' do
     expect(status[:relay1]).to be(true)
 
     exec(:relay, 2, false)
-        .should_send("1*0O")
+        .should_send("2*0O")
         .responds("Cpn2 Rly0\r\n")
     expect(status[:relay2]).to be(false)
   
