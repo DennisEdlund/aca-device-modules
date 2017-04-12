@@ -3,7 +3,7 @@ class Aca::MyTurn
     include ::Orchestrator::Constants
     include ::Orchestrator::Transcoder
 
-    descriptive_name 'MyTurn switching logic'
+    descriptive_name 'ACA MyTurn Switching Logic'
     generic_name :MyTurn
     implements :logic
 
@@ -20,6 +20,7 @@ class Aca::MyTurn
     end
 
     def present(source)
+        logger.debug { "Activating #{source} as MyTurn presentation" }
         source = source.to_sym
 
         # TODO: add switching / window layout logic
@@ -53,18 +54,24 @@ class Aca::MyTurn
     end
 
     def bind(source, trigger)
+        logger.debug do
+            target = "#{trigger[:module]}_#{trigger[:index]}"
+            target << "::#{trigger[:status]}"
+            "Binding #{source} to #{target} when #{trigger[:value]}"
+        end
         status = trigger.values_at(:module, :index, :status)
         system.subscribe(*status) do |notice|
-            if notice.value == trigger[:value]
-                logger.debug { "MyTurn triggered for #{source}" }
-                present source
-            end
+            present source if notice.value == trigger[:value]
         end
     end
 
     def rebind
+        logger.debug 'Rebinding MyTurn triggers'
+
         sys = system[:System]
+
         @subscriptions.each { |ref| unsubscribe(ref) } if @subscriptions
+
         @subscriptions = lookup_triggers(sys).map do |source, trigger|
             bind source, trigger
         end
