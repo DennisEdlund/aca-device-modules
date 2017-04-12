@@ -35,8 +35,12 @@ class Aca::MyTurn
 
     def extract_trigger(source)
         trigger = source[:myturn_trigger]
+
+        return nil if trigger.nil?
+
         compare = ->(x) { x == trigger[:value] }
         affirmative = ->(x) { is_affirmative? x }
+
         # Allow module to be specified as either `DigitalIO_1`, or as
         # discreet module name and index keys.
         /(?<mod>[^_]+)(_(?<idx>\d+))?/ =~ trigger[:module]
@@ -49,10 +53,9 @@ class Aca::MyTurn
     end
 
     def lookup_triggers(sys)
-        sources = sys[:sources].select do |name, config|
-            source_available?(sys, name) && config.key?(:myturn_trigger)
-        end
-        sources.transform_values { |config| extract_trigger(config) }
+        sources = sys[:sources].select { |name| source_available?(sys, name) }
+        triggers = sources.transform_values { |config| extract_trigger(config) }
+        triggers.compact
     end
 
     def bind(source, trigger)
