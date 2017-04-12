@@ -35,6 +35,8 @@ class Aca::MyTurn
 
     def extract_trigger(source)
         trigger = source[:myturn_trigger]
+        compare = ->(x) { x == trigger[:value] }
+        affirmative = ->(x) { is_affirmative? x }
         # Allow module to be specified as either `DigitalIO_1`, or as
         # discreet module name and index keys.
         /(?<mod>[^_]+)(_(?<idx>\d+))?/ =~ trigger[:module]
@@ -42,7 +44,7 @@ class Aca::MyTurn
             module: mod,
             index: idx || trigger[:index] || 1,
             status: trigger[:status],
-            value: trigger[:value]
+            check: trigger.key?(:value) ? compare : affirmative
         }
     end
 
@@ -54,14 +56,13 @@ class Aca::MyTurn
     end
 
     def bind(source, trigger)
-        logger.debug do
-            target = "#{trigger[:module]}_#{trigger[:index]}"
-            target << "::#{trigger[:status]}"
-            "Binding #{source} to #{target} when #{trigger[:value]}"
-        end
-        status = trigger.values_at(:module, :index, :status)
-        system.subscribe(*status) do |notice|
-            present source if notice.value == trigger[:value]
+        target = trigger.values_at(:module, :index, :status)
+        logger.debug { "Binding #{source} to #{target.join(' ')}" }
+        system.subscribe(*target) do |notice|
+            if trigger[:check][notice.value]
+                logger.debug { "MyTurn trigger for #{source} activated" }
+                present source
+            end
         end
     end
 
