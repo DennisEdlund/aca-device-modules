@@ -41,9 +41,9 @@ class Aca::MyTurn
         # discreet module name and index keys.
         /(?<mod>[^_]+)(_(?<idx>\d+))?/ =~ trigger[:module]
         {
-            module: mod,
+            module: mod.to_sym,
             index: idx || trigger[:index] || 1,
-            status: trigger[:status],
+            status: trigger[:status].to_sym,
             check: trigger.key?(:value) ? compare : affirmative
         }
     end
