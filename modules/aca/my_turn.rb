@@ -42,7 +42,7 @@ class Aca::MyTurn
         /(?<mod>[^_]+)(_(?<idx>\d+))?/ =~ trigger[:module]
         {
             module: mod.to_sym,
-            index: idx || trigger[:index] || 1,
+            index: idx.to_i || trigger[:index] || 1,
             status: trigger[:status].to_sym,
             check: trigger.key?(:value) ? compare : affirmative
         }
@@ -57,7 +57,9 @@ class Aca::MyTurn
 
     def bind(source, trigger)
         target = trigger.values_at(:module, :index, :status)
+
         logger.debug { "Binding #{source} to #{target.join(' ')}" }
+
         system.subscribe(*target) do |notice|
             if trigger[:check][notice.value]
                 logger.debug { "MyTurn trigger for #{source} activated" }
@@ -69,10 +71,13 @@ class Aca::MyTurn
     def rebind
         logger.debug 'Rebinding MyTurn triggers'
 
+        unless @subscriptions.nil?
+            @subscriptions.each do |reference|
+                unsubscribe(reference)
+            end
+        end
+
         sys = system[:System]
-
-        @subscriptions.each { |ref| unsubscribe(ref) } if @subscriptions
-
         @subscriptions = lookup_triggers(sys).map do |source, trigger|
             bind source, trigger
         end
