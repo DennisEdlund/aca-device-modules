@@ -47,8 +47,9 @@ class Aca::MyTurn
     protected
 
     def source_available?(sys, key)
-        sources = sys[:inputs].map { |input| sys[input] }.flatten
-        sources.include? key
+        sys[:inputs].map { |input| sys[input] }
+                    .flatten
+                    .include? key
     end
 
     def extract_trigger(source)
@@ -70,10 +71,21 @@ class Aca::MyTurn
         }
     end
 
-    def lookup_triggers(sys)
-        sources = sys[:sources].select { |name| source_available?(sys, name) }
-        triggers = sources.transform_values { |config| extract_trigger(config) }
-        triggers.compact
+    def triggers(sys)
+        sys[:sources].select { |name| source_available?(sys, name) }
+                     .transform_values { |config| extract_trigger(config) }
+                     .compact
+    end
+
+    def extract_role(output)
+        role = output[:myturn_role]
+        role.nil? ? nil : role.to_sym
+    end
+
+    def displays(sys, myturn_role)
+        sys[:outputs].transform_values { |config| extract_role(config) }
+                     .select { |_name, role| myturn_role.casecmp role }
+                     .keys
     end
 
     def bind(source, trigger)
@@ -90,17 +102,19 @@ class Aca::MyTurn
     end
 
     def rebind
-        logger.debug 'Rebinding MyTurn triggers'
+        logger.debug 'Rebinding MyTurn to current system state'
 
         unless @subscriptions.nil?
-            @subscriptions.each do |reference|
-                unsubscribe(reference)
-            end
+            @subscriptions.each { |reference| unsubscribe(reference) }
         end
 
         sys = system[:System]
-        @subscriptions = lookup_triggers(sys).map do |source, trigger|
+
+        @subscriptions = triggers(sys).map do |source, trigger|
             bind source, trigger
         end
+
+        @primary_displays = displays(sys, :primary)
+        @preview_displays = displays(sys, :preview)
     end
 end
