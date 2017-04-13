@@ -3,6 +3,55 @@ class Aca::MyTurn
     include ::Orchestrator::Constants
     include ::Orchestrator::Transcoder
 
+    # Utility class for accessing the meeting_room logic module
+    class SystemAccessor
+        def initialize(system)
+            @sys = system
+        end
+
+        def source_available?(name)
+            @sys[:inputs].map { |input| @sys[input] }
+                         .flatten
+                         .include? name
+        end
+
+        def extract_trigger(config)
+            trigger = config[:myturn_trigger]
+
+            return nil if trigger.nil?
+
+            compare = ->(x) { x == trigger[:value] }
+            affirmative = ->(x) { is_affirmative? x }
+
+            # Allow module to be specified as either `DigitalIO_1`, or as
+            # discreet module name and index keys.
+            /(?<mod>[^_]+)(_(?<idx>\d+))?/ =~ trigger[:module]
+            {
+                module: mod.to_sym,
+                index: idx.to_i || trigger[:index] || 1,
+                status: trigger[:status].to_sym,
+                check: trigger.key?(:value) ? compare : affirmative
+            }
+        end
+
+        def triggers
+            @sys[:sources].select { |name| source_available? name }
+                          .transform_values { |config| extract_trigger(config) }
+                          .compact
+        end
+
+        def extract_role(output)
+            role = output[:myturn_role]
+            role.nil? ? nil : role.to_sym
+        end
+
+        def displays(myturn_role)
+            @sys[:outputs].transform_values { |config| extract_role(config) }
+                          .select { |_name, role| myturn_role.casecmp role }
+                          .keys
+        end
+    end
+
     descriptive_name 'ACA MyTurn Switching Logic'
     generic_name :MyTurn
     implements :logic
@@ -46,47 +95,6 @@ class Aca::MyTurn
 
     protected
 
-    def source_available?(sys, key)
-        sys[:inputs].map { |input| sys[input] }
-                    .flatten
-                    .include? key
-    end
-
-    def extract_trigger(source)
-        trigger = source[:myturn_trigger]
-
-        return nil if trigger.nil?
-
-        compare = ->(x) { x == trigger[:value] }
-        affirmative = ->(x) { is_affirmative? x }
-
-        # Allow module to be specified as either `DigitalIO_1`, or as
-        # discreet module name and index keys.
-        /(?<mod>[^_]+)(_(?<idx>\d+))?/ =~ trigger[:module]
-        {
-            module: mod.to_sym,
-            index: idx.to_i || trigger[:index] || 1,
-            status: trigger[:status].to_sym,
-            check: trigger.key?(:value) ? compare : affirmative
-        }
-    end
-
-    def triggers(sys)
-        sys[:sources].select { |name| source_available?(sys, name) }
-                     .transform_values { |config| extract_trigger(config) }
-                     .compact
-    end
-
-    def extract_role(output)
-        role = output[:myturn_role]
-        role.nil? ? nil : role.to_sym
-    end
-
-    def displays(sys, myturn_role)
-        sys[:outputs].transform_values { |config| extract_role(config) }
-                     .select { |_name, role| myturn_role.casecmp role }
-                     .keys
-    end
 
     def bind(source, trigger)
         target = trigger.values_at(:module, :index, :status)
@@ -108,13 +116,13 @@ class Aca::MyTurn
             @subscriptions.each { |reference| unsubscribe(reference) }
         end
 
-        sys = system[:System]
+        sys = new SystemAccessor system[:System]
 
-        @subscriptions = triggers(sys).map do |source, trigger|
+        @subscriptions = sys.triggers.map do |source, trigger|
             bind source, trigger
         end
 
-        @primary_displays = displays(sys, :primary)
-        @preview_displays = displays(sys, :preview)
+        @primary_displays = sys.displays :primary
+        @preview_displays = sys.displays :preview
     end
 end
