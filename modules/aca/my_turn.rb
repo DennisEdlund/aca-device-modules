@@ -8,7 +8,10 @@ class Aca::MyTurn
     implements :logic
 
     def on_load
-        # TODO: subscribe to mode changes
+        system.subscribe(:System, 1, :current_mode) do
+            logger.debug 'System mode change detected'
+            rebind
+        end
 
         on_update
     end
