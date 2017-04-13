@@ -116,7 +116,7 @@ class Aca::MyTurn
             @subscriptions.each { |reference| unsubscribe(reference) }
         end
 
-        sys = new SystemAccessor system[:System]
+        sys = SystemAccessor.new system[:System]
 
         @subscriptions = sys.triggers.map do |source, trigger|
             bind source, trigger
