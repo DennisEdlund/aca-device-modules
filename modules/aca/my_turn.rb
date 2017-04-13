@@ -22,7 +22,22 @@ class Aca::MyTurn
         rebind
     end
 
+    def disable(state = true)
+        state = is_affirmative? state
+        logger.debug { "#{state ? 'Dis' : 'En'}abling MyTurn triggers" }
+        @switching_disabled = state
+    end
+
+    def enable
+        disable false
+    end
+
     def present(source)
+        if @switching_disabled
+            logger.debug 'MyTurn switching disabled, ignoring present request'
+            return
+        end
+
         logger.debug { "Activating #{source} as MyTurn presentation" }
         source = source.to_sym
 
