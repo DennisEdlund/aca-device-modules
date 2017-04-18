@@ -92,8 +92,9 @@ class Aca::MyTurn
         self[:switching_disabled] = state
     end
 
-    def enable
-        disable false
+    def enable(state = true)
+        state = is_affirmative? state
+        disable !state
     end
 
     def present(source)
