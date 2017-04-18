@@ -300,6 +300,10 @@ class Aca::FindmeBooking
         if self[:last_meeting_started].nil? || self[:meeting_ending] != (meeting_ref || self[:last_meeting_started])
             self[:meeting_ending] = true
 
+            schedule.in('30s') do
+                clear_end_meeting_warning
+            end
+
             # Allows meeting ending warnings in all rooms
             self[:last_meeting_started] = meeting_ref if meeting_ref
             self[:meeting_canbe_extended] = extendable
