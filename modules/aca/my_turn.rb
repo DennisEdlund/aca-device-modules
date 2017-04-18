@@ -74,7 +74,7 @@ class Aca::MyTurn
     def disable(state = true)
         state = is_affirmative? state
         logger.debug { "#{state ? 'Dis' : 'En'}abling MyTurn triggers" }
-        @switching_disabled = state
+        self[:switching_disabled] = state
     end
 
     def enable
@@ -82,7 +82,7 @@ class Aca::MyTurn
     end
 
     def present(source)
-        if @switching_disabled
+        if self[:switching_disabled]
             logger.debug 'MyTurn switching disabled, ignoring present request'
             return
         end
@@ -95,14 +95,13 @@ class Aca::MyTurn
 
     protected
 
-
     def bind(source, trigger)
         target = trigger.values_at(:module, :index, :status)
 
         logger.debug { "Binding #{source} to #{target.join(' ')}" }
 
         system.subscribe(*target) do |notice|
-            if trigger[:check][notice.value]
+            if trigger[:check].call notice.value
                 logger.debug { "MyTurn trigger for #{source} activated" }
                 present source
             end
@@ -116,13 +115,13 @@ class Aca::MyTurn
             @subscriptions.each { |reference| unsubscribe(reference) }
         end
 
-        sys = SystemAccessor.new system[:System]
+        @sys = SystemAccessor.new system[:System]
+        self[:triggers] = @sys.triggers
+        self[:primary_displays] = @sys.displays :primary
+        self[:preview_displays] = @sys.displays :preview
 
-        @subscriptions = sys.triggers.map do |source, trigger|
+        @subscriptions = self[:triggers].map do |source, trigger|
             bind source, trigger
         end
-
-        @primary_displays = sys.displays :primary
-        @preview_displays = sys.displays :preview
     end
 end
