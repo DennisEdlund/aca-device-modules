@@ -54,7 +54,7 @@ class Aca::MyTurn
 
         def displays(myturn_role)
             @sys[:outputs].transform_values { |config| extract_role(config) }
-                          .select { |_name, role| myturn_role.casecmp role }
+                          .select { |_name, role| myturn_role == role }
                           .keys
         end
 
