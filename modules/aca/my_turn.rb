@@ -57,6 +57,14 @@ class Aca::MyTurn
                           .select { |_name, role| myturn_role.casecmp role }
                           .keys
         end
+
+        def present(source, displays)
+            Array(displays).each { |display| @sys.present source, display }
+        end
+
+        def source(display)
+            @sys[display][:source] unless @sys[display].nil?
+        end
     end
 
     descriptive_name 'ACA MyTurn Switching Logic'
@@ -66,7 +74,7 @@ class Aca::MyTurn
     def on_load
         system.subscribe(:System, 1, :current_mode) do
             logger.debug 'System mode change detected'
-            rebind
+            rebind_module
         end
 
         on_update
@@ -75,7 +83,7 @@ class Aca::MyTurn
     def on_unload; end
 
     def on_update
-        rebind
+        rebind_module
     end
 
     def disable(state = true)
@@ -91,16 +99,47 @@ class Aca::MyTurn
     def present(source)
         if self[:switching_disabled]
             logger.debug 'MyTurn switching disabled, ignoring present request'
-            return
+        else
+            logger.debug { "Activating #{source} as MyTurn presentation" }
+            present_actual source.to_sym
         end
+    end
 
-        logger.debug { "Activating #{source} as MyTurn presentation" }
-        source = source.to_sym
-
-        # TODO: add switching / window layout logic
+    def preview(source, replace: :none)
+        if self[:switching_disabled]
+            logger.debug 'MyTurn switching disabled, ignoring preview request'
+        else
+            logger.debug { "Adding #{source} to MyTurn previews" }
+            preview_actual source.to_sym, replace.to_sym
+        end
     end
 
     protected
+
+    def present_actual(source)
+        # Present the new source.
+        old_source = self[:presentation_source]
+        @sys.present source, self[:primary_displays]
+        self[:presentation_source] = source
+
+        # Minimise the previous source to a preview display
+        preview old_source, replace: source unless old_source.nil?
+    end
+
+    def preview_actual(source, replaceable_source)
+        # Use either a display with a replaceable source, or the next in the
+        # list of available preview displays.
+        replaceable_display = @preview_targets.find do |display|
+            @sys.source(display) == replaceable_source
+        end
+        display = replaceable_display || @preview_targets.first
+
+        # Move the used preview to the end of our prefences for re-use.
+        @preview_targets.delete display
+        @preview_targets << display
+
+        @sys.present source, display
+    end
 
     def bind(source, trigger)
         target = trigger.values_at(:module, :index, :status)
@@ -115,20 +154,28 @@ class Aca::MyTurn
         end
     end
 
-    def rebind
-        logger.debug 'Rebinding MyTurn to current system state'
-
+    def resubscribe_triggers(triggers)
         unless @subscriptions.nil?
             @subscriptions.each { |reference| unsubscribe(reference) }
         end
+
+        @subscriptions = triggers.map do |source, trigger|
+            bind source, trigger
+        end
+    end
+
+    def rebind_module
+        logger.debug 'Rebinding MyTurn to current system state'
 
         @sys = SystemAccessor.new system[:System]
         self[:triggers] = @sys.triggers
         self[:primary_displays] = @sys.displays :primary
         self[:preview_displays] = @sys.displays :preview
 
-        @subscriptions = self[:triggers].map do |source, trigger|
-            bind source, trigger
-        end
+        # Maintain an internal array of preview targets that can be re-ordered
+        # without raising status updates.
+        @preview_targets = self[:preview_displays].dup
+
+        resubscribe_triggers self[:triggers]
     end
 end
