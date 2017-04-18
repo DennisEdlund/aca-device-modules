@@ -20,9 +20,6 @@ class Aca::MyTurn
 
             return nil if trigger.nil?
 
-            compare = ->(x) { x == trigger[:value] }
-            affirmative = ->(x) { is_affirmative? x }
-
             # Allow module to be specified as either `DigitalIO_1`, or as
             # discreet module name and index keys.
             /(?<mod>[^_]+)(_(?<idx>\d+))?/ =~ trigger[:module]
@@ -30,8 +27,16 @@ class Aca::MyTurn
                 module: mod.to_sym,
                 index: idx.to_i || trigger[:index] || 1,
                 status: trigger[:status].to_sym,
-                check: trigger.key?(:value) ? compare : affirmative
+                value: trigger[:value] || :__affirmative
             }
+        end
+
+        def trigger_active?(trigger, state)
+            if trigger[:value] == :__afirmative
+                is_affirmative? state
+            else
+                state == trigger[:value]
+            end
         end
 
         def triggers
@@ -101,7 +106,7 @@ class Aca::MyTurn
         logger.debug { "Binding #{source} to #{target.join(' ')}" }
 
         system.subscribe(*target) do |notice|
-            if trigger[:check].call notice.value
+            if @sys.trigger_active? trigger, notice.value
                 logger.debug { "MyTurn trigger for #{source} activated" }
                 present source
             end
