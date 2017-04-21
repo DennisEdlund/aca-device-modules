@@ -58,7 +58,12 @@ class Aca::FindmeBooking
         ldap_creds: {
             host: 'ldap.org.com',
             port: 636,
-            encryption: :simple_tls,
+            encryption: {
+                method: :simple_tls,
+                tls_options: {
+                    verify_mode: 0
+                }
+            },
             auth: {
                   method: :simple,
                   username: 'service account',
@@ -106,6 +111,8 @@ class Aca::FindmeBooking
         if CAN_LDAP
             @ldap_creds = setting(:ldap_creds)
             if @ldap_creds
+                encrypt = @ldap_creds[:encryption]
+                encrypt[:method] = encrypt[:method].to_sym if encrypt && encrypt[:method]
                 @tree_base = setting(:tree_base)
                 @ldap_user = @ldap_creds.delete :auth
             end
@@ -151,7 +158,7 @@ class Aca::FindmeBooking
             if readers.present?
                 security = system[:Security]
 
-                readers = readers.is_a?(Array) ? readers : [readers]
+                readers = Array(readers)
                 sys = system
                 @subs = []
                 readers.each do |id|
@@ -378,6 +385,8 @@ class Aca::FindmeBooking
             logger.warn "no staff ID for user #{self[:fullname]}"
             set_email nil
         end
+    rescue => e
+        logger.print_error(e, 'error handling card swipe')
     end
 
     def set_email(email)
@@ -409,6 +418,8 @@ class Aca::FindmeBooking
 
         # Returns email as a promise
         email
+    rescue => e
+        logger.print_error(e, 'error looking up email')
     end
 
     def get_attr(entry, attr_name)
