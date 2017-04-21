@@ -388,6 +388,55 @@ class Aca::MeetingRoom < Aca::Joiner
     end
 
 
+    def set_default_output_levels
+        level = @defaults[:output_level]
+        self[:outputs].each do |key, value|
+            if value[:no_audio].nil? && value[:mixer_id]
+                args = {}
+                args[:ids] = value[:mute_id] || value[:mixer_id]
+                args[:muted] = false
+                args[:index] = value[:mixer_mute_index] || value[:mixer_index] if value[:mixer_mute_index] || value[:mixer_index]
+                args[:type] = value[:mixer_type] if value[:mixer_type]
+                mixer.mutes(args)
+
+                new_level = value[:default_level] || level
+                if new_level
+                    args = {}
+                    args[:ids] = value[:mixer_id]
+                    args[:level] = new_level
+                    args[:index] = value[:mixer_index] if value[:mixer_index]
+                    args[:type] = value[:mixer_type] if value[:mixer_type]
+                    mixer.faders(args)
+                end
+            end
+        end
+    end
+
+    def set_default_mic_levels
+        if self[:mics]
+            level = @defaults[:mic_level]
+            self[:mics].each do |mic|
+                new_level = mic[:default_level] || level
+
+                args = {}
+                args[:ids] = mic[:mute_id] || mic[:id]
+                args[:muted] = false
+                args[:index] = mic[:index] if mic[:index]
+                args[:type] = mic[:type] if mic[:type]
+                mixer.mutes(args)
+
+                if new_level
+                    args = {}
+                    args[:ids] = mic[:id]
+                    args[:level] = new_level
+                    args[:index] = mic[:index] if mic[:index]
+                    args[:type] = mic[:type] if mic[:type]
+                    mixer.faders(args)
+                end
+            end
+        end
+    end
+
     def switch_mode(mode_name, from_join = false, booting: false)
         logger.debug { "switch mode called for #{mode_name} -- #{!!@modes}" }
 
@@ -478,6 +527,8 @@ class Aca::MeetingRoom < Aca::Joiner
                     mixer = sys[:Mixer]
                     Array(mode[:audio_preset]).each { |preset| mixer.trigger(preset) }
                 end
+                set_default_output_levels
+                set_default_mic_levels
                 sys[:Switcher].switch(mode[:routes]) if mode[:routes]
                 sys[:Lighting].trigger(@light_group, mode[:light_preset]) if mode[:light_preset]
                 sys[:VideoWall].preset(mode[:videowall_preset]) if mode[:videowall_preset]
@@ -549,57 +600,14 @@ class Aca::MeetingRoom < Aca::Joiner
             end
         end
 
+        # Setup audio defaults
         if @defaults[:on_preset]
             mixer.preset(@defaults[:on_preset])
-
         else
-            # Output levels and mutes
-            level = @defaults[:output_level]
-            self[:outputs].each do |key, value|
-                if value[:no_audio].nil? && value[:mixer_id]
-                    args = {}
-                    args[:ids] = value[:mute_id] || value[:mixer_id]
-                    args[:muted] = false
-                    args[:index] = value[:mixer_mute_index] || value[:mixer_index] if value[:mixer_mute_index] || value[:mixer_index]
-                    args[:type] = value[:mixer_type] if value[:mixer_type]
-                    mixer.mutes(args)
-
-                    new_level = value[:default_level] || level
-                    if new_level
-                        args = {}
-                        args[:ids] = value[:mixer_id]
-                        args[:level] = new_level
-                        args[:index] = value[:mixer_index] if value[:mixer_index]
-                        args[:type] = value[:mixer_type] if value[:mixer_type]
-                        mixer.faders(args)
-                    end
-                end
-            end
-
-            # Mic levels and mutes
-            if self[:mics]
-                level = @defaults[:mic_level]
-                self[:mics].each do |mic|
-                    new_level = mic[:default_level] || level
-
-                    args = {}
-                    args[:ids] = mic[:mute_id] || mic[:id]
-                    args[:muted] = false
-                    args[:index] = mic[:index] if mic[:index]
-                    args[:type] = mic[:type] if mic[:type]
-                    mixer.mutes(args)
-
-                    if new_level
-                        args = {}
-                        args[:ids] = mic[:id]
-                        args[:level] = new_level
-                        args[:index] = mic[:index] if mic[:index]
-                        args[:type] = mic[:type] if mic[:type]
-                        mixer.faders(args)
-                    end
-                end
-            end
+            set_default_output_levels
+            set_default_mic_levels
         end
+
         # Turn on VC cameras
         start_cameras unless @no_cam_on_boot
 
