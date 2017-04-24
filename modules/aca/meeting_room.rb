@@ -389,6 +389,7 @@ class Aca::MeetingRoom < Aca::Joiner
 
 
     def set_default_output_levels
+        mixer = sys[:Mixer]
         level = @defaults[:output_level]
         self[:outputs].each do |key, value|
             if value[:no_audio].nil? && value[:mixer_id]
@@ -414,6 +415,7 @@ class Aca::MeetingRoom < Aca::Joiner
 
     def set_default_mic_levels
         if self[:mics]
+            mixer = sys[:Mixer]
             level = @defaults[:mic_level]
             self[:mics].each do |mic|
                 new_level = mic[:default_level] || level
