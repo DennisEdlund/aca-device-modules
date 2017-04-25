@@ -46,7 +46,7 @@ class Aca::ExchangeBooking
 
     # The room we are interested in
     default_settings({
-        update_every: '5m',
+        update_every: '2m',
 
         # Moved to System or Zone Setting
         # cancel_meeting_after: 900
@@ -58,7 +58,12 @@ class Aca::ExchangeBooking
         ldap_creds: {
             host: 'ldap.org.com',
             port: 636,
-            encryption: :simple_tls,
+            encryption: {
+                method: :simple_tls,
+                tls_options: {
+                    verify_mode: 0
+                }
+            },
             auth: {
                   method: :simple,
                   username: 'service account',
@@ -113,6 +118,8 @@ class Aca::ExchangeBooking
         if CAN_LDAP
             @ldap_creds = setting(:ldap_creds)
             if @ldap_creds
+                encrypt = @ldap_creds[:encryption]
+                encrypt[:method] = encrypt[:method].to_sym if encrypt && encrypt[:method]
                 @tree_base = setting(:tree_base)
                 @ldap_user = @ldap_creds.delete :auth
             end
