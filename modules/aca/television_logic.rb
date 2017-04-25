@@ -1,4 +1,6 @@
 
+module Aca; end
+
 class Aca::TelevisionLogic
     include ::Orchestrator::Constants
 
