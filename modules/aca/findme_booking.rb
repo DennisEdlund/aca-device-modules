@@ -324,7 +324,11 @@ class Aca::FindmeBooking
 
     def create_meeting(duration, next_start = nil)
         if next_start
-            next_start = Time.at((next_start / 1000).to_i)
+            if next_start.is_a? Integer
+                next_start = Time.at((next_start / 1000).to_i)
+            else
+                next_start = Time.parse(next_start.split(/z/i)[0])
+            end
         end
 
         start_time = Time.now
