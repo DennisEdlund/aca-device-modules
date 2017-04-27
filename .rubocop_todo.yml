@@ -6,38 +6,6 @@
 # Note that changes in the inspected code, or installation of new
 # versions of RuboCop, may require this file to be generated again.
 
-# Offense count: 2
-# Cop supports --auto-correct.
-Performance/Casecmp:
-  Exclude:
-    - 'modules/cisco/tele_presence/sx_camera.rb'
-
-# Offense count: 4
-# Cop supports --auto-correct.
-Performance/RedundantBlockCall:
-  Exclude:
-    - 'modules/amx/svsi/virtual_switcher.rb'
-    - 'modules/cisco/tele_presence/sx_camera.rb'
-    - 'modules/sharp/displays/pn_series.rb'
-    - 'modules/vaddio/camera/clear_view_ptz_telnet.rb'
-
-# Offense count: 3
-# Cop supports --auto-correct.
-# Configuration parameters: MaxKeyValuePairs.
-Performance/RedundantMerge:
-  Exclude:
-    - 'modules/denon/bluray/dbt3313.rb'
-    - 'modules/pioneer/bluray/bdp_series.rb'
-    - 'modules/sharp/displays/pn_series.rb'
-
-# Offense count: 5
-# Cop supports --auto-correct.
-Performance/StringReplacement:
-  Exclude:
-    - 'modules/cisco/tele_presence/sx_camera.rb'
-    - 'modules/qsc/q_sys_control.rb'
-    - 'modules/symetrix/composer.rb'
-
 # Offense count: 4
 # Cop supports --auto-correct.
 # Configuration parameters: EnforcedStyle, SupportedStyles, IndentationWidth.
