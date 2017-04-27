@@ -9,14 +9,20 @@ Metrics/AbcSize:
 Metrics/BlockNesting:
   Max: 4
 
-Metrics/ClassLength:
-  Max: 300
+Metrics/BlockLength:
+  Max: 30
 
 Metrics/MethodLength:
   Max: 30
 
+Metrics/ClassLength:
+  Max: 300
+
 Metrics/ModuleLength:
   Max: 300
+
+Metrics/ParameterLists:
+  Max: 4
 
 Style/IndentationWidth:
   Width: 4
