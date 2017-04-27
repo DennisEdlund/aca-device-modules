@@ -7,13 +7,13 @@ Metrics/BlockNesting:
   Max: 4
 
 Metrics/ClassLength:
-  Max: 250
+  Max: 300
 
 Metrics/MethodLength:
   Max: 30
 
 Metrics/ModuleLength:
-  Max: 250
+  Max: 300
 
 Style/IndentationWidth:
   Width: 4

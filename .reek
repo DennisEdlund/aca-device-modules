@@ -1,0 +1,22 @@
+# Allow a small number of duplicate method calls.
+DuplicateMethodCall:
+  max_calls: 3
+
+# Don't force comments on classes / modules. In most cases the class name provides adequate info.
+IrresponsibleModule:
+  enabled: false
+
+# Disable unused parameter checks. These can occur a bit (e.g. in receive
+# handlers) where it's nicer to keep standardisation of method signatures across
+# modules.
+UnusedParameters:
+  enabled: false
+
+# Allow slightly longer methods than the default to accomodate sane levels of
+# sequential actions.
+TooManyStatements:
+  max_statements: 10
+
+# Increase max method threshold to accomandate devices with a larger number of interaction points.
+TooManyMethods:
+  max_methods: 30
