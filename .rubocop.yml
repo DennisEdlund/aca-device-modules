@@ -23,3 +23,9 @@ Style/IndentationWidth:
 
 Style/ClassAndModuleChildren:
   EnforcedStyle: 'compact'
+
+Lint/UnusedMethodArgument:
+  Enabled: false
+
+Lint/UnusedBlockArgument:
+  Enabled: false 
