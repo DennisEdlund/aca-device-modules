@@ -111,7 +111,7 @@ class Aca::LifterLogicManual
                 if @next[relay]
                     args = @next[relay]
                     @next.delete(relay)
-                    pulse *args
+                    pulse(*args)
                 end
             end
         else

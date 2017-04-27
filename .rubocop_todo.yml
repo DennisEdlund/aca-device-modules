@@ -6,13 +6,6 @@
 # Note that changes in the inspected code, or installation of new
 # versions of RuboCop, may require this file to be generated again.
 
-# Offense count: 3
-Lint/AmbiguousOperator:
-  Exclude:
-    - 'modules/aca/lifter_logic_manual.rb'
-    - 'modules/aca/screen_logic_manual.rb'
-    - 'modules/cisco/tele_presence/sx_camera.rb'
-
 # Offense count: 2
 # Cop supports --auto-correct.
 # Configuration parameters: EnforcedStyleAlignWith, SupportedStylesAlignWith.
