@@ -6,6 +6,15 @@ class Extron::Iplt < Extron::Base
     descriptive_name 'Extron IPL T IP to Relay/IO Gateway'
     generic_name :DigitalIO
 
+    def on_load
+      on_update
+    end
+
+    def on_update
+        # setting invert to true will invert the true/false output of the io or relay status 
+        self[:inverted_io] = @invert_io = setting(:invert_io) || false
+        self[:inverted_relay] = @invert_relay = setting(:invert_relay) || false
+    end
 
     def relay(index, state, options = {})
         if is_affirmative?(state)
@@ -37,9 +46,17 @@ class Extron::Iplt < Extron::Base
                         #012345678
                 case data[5..7].to_sym
                 when :Rly
-                    self["relay#{data[3].to_i}"] = !data[8].to_i.zero? # String to int (0/1) to bool
+		    if @invert_relay
+                      self["relay#{data[3].to_i}"] = data[8] == '0' 
+                    else
+		      self["relay#{data[3].to_i}"] = data[8] == '1' 
+		    end
                 when :Sio
-                    self["io#{data[3].to_i}"] = !data[8].to_i.zero?
+		    if @invert_io
+                     self["io#{data[3].to_i}"] = data[8] == '0' 
+		    else 
+                      self["io#{data[3].to_i}"] = data[8] == '1'
+                    end
                 else
                     logger.info "Unrecognised response: #{data}"
                 end
