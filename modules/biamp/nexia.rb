@@ -1,5 +1,3 @@
-# encoding: US-ASCII
-
 module Biamp; end
 
 class Biamp::Nexia
@@ -13,7 +11,7 @@ class Biamp::Nexia
     generic_name :Mixer
 
     # Communication settings
-    tokenize delimiter: /\xFF\xFE\x01|\r\n/
+    tokenize delimiter: Regexp.new("\xFF\xFE\x01|\r\n", nil, 'n')
 
     # Nexia requires some breathing room
     delay between_sends: 30
