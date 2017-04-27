@@ -82,6 +82,7 @@ DESC
         :hard_off => 0x11,      # Completely powers off
         :panel_mute => 0xF9,    # Screen blanking / visual mute
         :volume => 0x12,
+        :brightness => 0x25,
         :input => 0x14,
         :mode => 0x18,
         :size => 0x19,
@@ -171,11 +172,13 @@ DESC
     end
 
     def volume(vol, options = {})
-        vol = vol.to_i
-        vol = 0 if vol < 0
-        vol = 100 if vol > 100
-
+        vol = in_range(vol.to_i, 100)
         do_send(:volume, vol, options)
+    end
+
+    def brightness(val, options = {})
+        val = in_range(val.to_i, 100)
+        do_send(:brightness, val, options)
     end
 
 
@@ -298,6 +301,8 @@ DESC
                     if self[:audio_mute] && value > 0
                         self[:audio_mute] = false
                     end
+                when :brightness
+                    self[:brightness] = value
                 when :input
                     self[:input] = INPUTS[value]
                     if not self[:input_stable]

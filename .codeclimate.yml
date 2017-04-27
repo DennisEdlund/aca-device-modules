@@ -1,0 +1,16 @@
+engines:
+  duplication:
+    enabled: false
+    config:
+      languages:
+      - ruby
+  fixme:
+    enabled: true
+  rubocop:
+    enabled: true
+  reek:
+    enabled: true
+ratings:
+  paths:
+  - "**.rb"
+exclude_paths: []

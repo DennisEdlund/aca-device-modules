@@ -207,7 +207,7 @@ class Cisco::TelePresence::SxCamera < Cisco::TelePresence::SxTelnet
             else
                 cmd << params(:Tilt => dir_vert, :TiltSpeed => tilt_speed)
             end
-            command *cmd, **options
+            command(*cmd, **options)
         end
     end
 
