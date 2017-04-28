@@ -18,7 +18,7 @@ class Aca::MyTurn
         def extract_trigger(config)
             trigger = config[:myturn_trigger]
 
-            return nil if trigger.nil?
+            return nil if !trigger
 
             # Allow module to be specified as either `DigitalIO_1`, or as
             # discreet module name and index keys.
@@ -39,7 +39,7 @@ class Aca::MyTurn
 
         def extract_role(output)
             role = output[:myturn_role]
-            role.nil? ? nil : role.to_sym
+            role ? role.to_sym : nil
         end
 
         def displays(myturn_role)
@@ -53,7 +53,8 @@ class Aca::MyTurn
         end
 
         def source(display)
-            @sys[display][:source] unless @sys[display].nil?
+            display_info = @sys[display]
+            display_info ? display_info[:source] : :none
         end
     end
 
@@ -119,7 +120,9 @@ class Aca::MyTurn
         self[:presentation_source] = source
 
         # Minimise the previous source to a preview display
-        preview old_source, replace: source unless old_source.nil?
+        if old_source
+            preview old_source, replace: source
+        end
     end
 
     def preview_actual(source, replaceable_source)
