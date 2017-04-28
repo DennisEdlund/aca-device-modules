@@ -32,7 +32,7 @@ class Aca::MyTurn
         end
 
         def trigger_active?(trigger, state)
-            if trigger[:value] == :__afirmative
+            if trigger[:value] == :__affirmative
                 is_affirmative? state
             elsif trigger[:value] == :__negatory
                 is_negatory? state
