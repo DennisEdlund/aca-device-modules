@@ -15,35 +15,34 @@ class Aca::MyTurn
                          .include? name
         end
 
-        def extract_trigger(config)
-            trigger = config[:myturn_trigger]
-
-            return nil if !trigger
-
-            # Allow module to be specified as either `DigitalIO_1`, or as
-            # discreet module name and index keys.
-            /(?<mod>[^_]+)(_(?<idx>\d+))?/ =~ trigger[:module]
-            {
-                module: mod.to_sym,
-                index: idx.to_i || trigger[:index] || 1,
-                status: trigger[:status].to_sym,
-                value: trigger[:value] || :__affirmative
-            }
-        end
-
         def triggers
+            extract_trigger = lambda do |config|
+                trigger = config[:myturn_trigger]
+                if trigger
+                    # Allow module to be specified as either `DigitalIO_1`, or
+                    # as discreet module name and index keys.
+                    /(?<mod>[^_]+)(_(?<idx>\d+))?/ =~ trigger[:module]
+                    {
+                        module: mod.to_sym,
+                        index: idx.to_i || trigger[:index] || 1,
+                        status: trigger[:status].to_sym,
+                        value: trigger[:value] || :__affirmative
+                    }
+                end
+            end
+
             @sys[:sources].select { |name| source_available? name }
-                          .transform_values { |config| extract_trigger(config) }
+                          .transform_values(&extract_trigger)
                           .compact
         end
 
-        def extract_role(output)
-            role = output[:myturn_role]
-            role ? role.to_sym : nil
-        end
-
         def displays(myturn_role)
-            @sys[:outputs].transform_values { |config| extract_role(config) }
+            extract_role = lambda do |config|
+                role = config[:myturn_role]
+                role.to_sym if role
+            end
+
+            @sys[:outputs].transform_values(&extract_role)
                           .select { |_name, role| myturn_role == role }
                           .keys
         end
