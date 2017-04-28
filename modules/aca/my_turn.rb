@@ -86,15 +86,14 @@ class Aca::MyTurn
         rebind_module
     end
 
-    def disable(state = true)
-        state = is_affirmative? state
-        logger.debug { "#{state ? 'Dis' : 'En'}abling MyTurn triggers" }
-        self[:switching_disabled] = state
+    def disable
+        logger.debug 'Disabling MyTurn triggers'
+        self[:switching_disabled] = true
     end
 
-    def enable(state = true)
-        state = is_affirmative? state
-        disable !state
+    def enable
+        logger.debug 'Enabling MyTurn triggers'
+        self[:switching_disabled] = false
     end
 
     def present(source)
