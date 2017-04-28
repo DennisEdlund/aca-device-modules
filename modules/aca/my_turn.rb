@@ -147,11 +147,11 @@ class Aca::MyTurn
 
         is_active = case trigger[:value]
                     when :__affirmative
-                        ->(x) { is_affirmative? x }
+                        ->(state) { is_affirmative? state }
                     when :__negatory
-                        ->(x) { is_negatory? x }
+                        ->(state) { is_negatory? state }
                     else
-                        ->(x) { x == trigger[:value] }
+                        ->(state) { state == trigger[:value] }
                     end
 
         system.subscribe(*target) do |notice|
