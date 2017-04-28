@@ -61,6 +61,12 @@ class Aca::MyTurn
     generic_name :MyTurn
     implements :logic
 
+    def initialize
+        @system = nil
+        @subscriptions = []
+        @preview_targets = []
+    end
+
     def on_load
         system.subscribe(:System, 1, :current_mode) do
             logger.debug 'System mode change detected'
@@ -109,7 +115,7 @@ class Aca::MyTurn
     def present_actual(source)
         # Present the new source.
         old_source = self[:presentation_source]
-        @sys.present source, self[:primary_displays]
+        @system.present source, self[:primary_displays]
         self[:presentation_source] = source
 
         # Minimise the previous source to a preview display
@@ -120,7 +126,7 @@ class Aca::MyTurn
         # Use either a display with a replaceable source, or the next in the
         # list of available preview displays.
         replaceable_display = @preview_targets.find do |display|
-            @sys.source(display) == replaceable_source
+            @system.source(display) == replaceable_source
         end
         display = replaceable_display || @preview_targets.first
 
@@ -128,7 +134,7 @@ class Aca::MyTurn
         @preview_targets.delete display
         @preview_targets << display
 
-        @sys.present source, display
+        @system.present source, display
     end
 
     def bind(source, trigger)
@@ -154,9 +160,7 @@ class Aca::MyTurn
     end
 
     def resubscribe_triggers(triggers)
-        unless @subscriptions.nil?
-            @subscriptions.each { |reference| unsubscribe(reference) }
-        end
+        @subscriptions.each { |reference| unsubscribe(reference) }
 
         @subscriptions = triggers.map do |source, trigger|
             bind source, trigger
@@ -166,10 +170,10 @@ class Aca::MyTurn
     def rebind_module
         logger.debug 'Rebinding MyTurn to current system state'
 
-        @sys = SystemAccessor.new system[:System]
-        self[:triggers] = @sys.triggers
-        self[:primary_displays] = @sys.displays :primary
-        self[:preview_displays] = @sys.displays :preview
+        @system = SystemAccessor.new system[:System]
+        self[:triggers] = @system.triggers
+        self[:primary_displays] = @system.displays :primary
+        self[:preview_displays] = @system.displays :preview
 
         # Maintain an internal array of preview targets that can be re-ordered
         # without raising status updates.
