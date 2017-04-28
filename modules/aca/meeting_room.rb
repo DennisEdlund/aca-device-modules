@@ -495,11 +495,6 @@ class Aca::MeetingRoom < Aca::Joiner
                 end
             end
 
-            self[:mics] = mode[:mics] || setting(:mics)
-            self[:current_mode] = mode_name
-            self[:current_cog_mode] = mode[:cog_label]
-            define_setting(:current_mode, self[:current_mode])
-
             # Update the inputs
             inps = (setting(:inputs) + (mode[:inputs] || [])) - (mode[:remove_inputs] || [])
             inps.each do |input|
@@ -519,6 +514,14 @@ class Aca::MeetingRoom < Aca::Joiner
                     video_mute(display)
                 end
             end
+
+            # Update the mic mappings
+            self[:mics] = mode[:mics] || setting(:mics)
+
+            # Update and save out the new mode
+            self[:current_mode] = mode_name
+            self[:current_cog_mode] = mode[:cog_label]
+            define_setting(:current_mode, self[:current_mode])
 
             # Power on the system and apply any custom presets
             begin
