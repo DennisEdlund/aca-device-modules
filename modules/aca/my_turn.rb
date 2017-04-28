@@ -31,16 +31,6 @@ class Aca::MyTurn
             }
         end
 
-        def trigger_active?(trigger, state)
-            if trigger[:value] == :__affirmative
-                is_affirmative? state
-            elsif trigger[:value] == :__negatory
-                is_negatory? state
-            else
-                state == trigger[:value]
-            end
-        end
-
         def triggers
             @sys[:sources].select { |name| source_available? name }
                           .transform_values { |config| extract_trigger(config) }
@@ -146,8 +136,17 @@ class Aca::MyTurn
 
         logger.debug { "Binding #{source} to #{target.join(' ')}" }
 
+        is_active = case trigger[:value]
+                    when :__affirmative
+                        ->(x) { is_affirmative? x }
+                    when :__negatory
+                        ->(x) { is_negatory? x }
+                    else
+                        ->(x) { x == trigger[:value] }
+                    end
+
         system.subscribe(*target) do |notice|
-            if @sys.trigger_active? trigger, notice.value
+            if is_active.call notice.value
                 logger.debug { "MyTurn trigger for #{source} activated" }
                 present source
             end
