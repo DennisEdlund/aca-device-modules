@@ -644,6 +644,9 @@ class Aca::MeetingRoom < Aca::Joiner
         switch_mode(@defaults[:shutdown_mode]) if @defaults[:shutdown_mode]
 
         mixer = system[:Mixer]
+        
+        # Hangup, in case there are any active softphone calls
+        mixer.phone_hangup(self[:phone_settings][:hangup_id])
 
         # Unroutes
         # Turns off audio if off (audio driver)
