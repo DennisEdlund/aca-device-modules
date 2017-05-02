@@ -645,9 +645,11 @@ class Aca::MeetingRoom < Aca::Joiner
 
         mixer = system[:Mixer]
         
-        # Hangup in case there are any active softphone calls, and blank the phone number on the UI/Mixer control as well
-        mixer.phone_hangup(self[:phone_settings][:hangup_id])
-        mixer.phone_number('', self[:phone_settings][:number_id])
+        # Hangup any softphone calls and blank the phone number on the UI and DSP
+        unless mixer.nil?
+          mixer.phone_hangup(self[:phone_settings][:hangup_id])
+          mixer.phone_number('', self[:phone_settings][:number_id])
+        end
 
         # Unroutes
         # Turns off audio if off (audio driver)
