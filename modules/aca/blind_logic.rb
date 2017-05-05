@@ -7,16 +7,23 @@ class Aca::BlindLogic
     generic_name :Blinds
     implements :logic
 
+    def initialize
+        @all_blinds = []
+    end
+
     def on_load
         on_update
     end
 
     def on_update
-        blinds = setting :blinds
+        blind_definitions = setting :blinds
 
-        blinds.each_with_index do |blind, idx|
+        @all_blinds = []
+
+        blind_definitions.each_with_index do |blind, idx|
             name = blind[:title] || "Blind #{idx + 1}"
             self[name.to_sym] = blind.slice :module, :up, :stop, :down
+            @all_blinds << name
         end
     end
 
@@ -41,13 +48,13 @@ class Aca::BlindLogic
 
     # Lookup blind either via it's title or index (1 based, for humans)
     def config_for(key)
-        key = "Blind #{key}" if key.is_a? Integer
+        key = @all_blinds[key - 1] if key.is_a? Integer
         self[key.to_sym]
     end
 
     def move(blind, direction)
         if blind.to_sym == :all
-            atrribute_names.each do |individual_blind|
+            @all_blinds.each do |individual_blind|
                 move individual_blind, direction
             end
             return
