@@ -14,14 +14,14 @@ class Aca::BlindLogic
     def on_update
         blinds = setting :blinds
 
-        extract_config = ->(blind) { blind.slice :module, :up, :stop, :down }
-        extract_title = ->(blind, fallback) { blind[:title] || fallback }
+        config = ->(blind) { blind.slice :module, :up, :stop, :down }
+        title = ->(blind, fallback) { blind[:title] || fallback }
 
-        blinds.each_with_index(1).map! do |blind, num|
-            [extract_config[blind], extract_title[blind, "Blind #{num}"]]
+        hashable_settings = blinds.each_with_index.map do |blind, idx|
+            [title[blind, "Blind #{idx + 1}"], config[blind]]
         end
 
-        self[:blinds] = Hash[blinds]
+        self[:blinds] = Hash[hashable_settings]
     end
 
     def up(blind = :all)
