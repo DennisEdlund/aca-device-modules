@@ -7,24 +7,19 @@ class Aca::BlindLogic
     generic_name :Blinds
     implements :logic
 
-    def initialize
-        @all_blinds = []
-    end
-
     def on_load
         on_update
     end
 
     def on_update
-        blind_definitions = setting :blinds
+        blinds = setting :blinds
 
-        @all_blinds = []
-
-        blind_definitions.each_with_index do |blind, idx|
+        hashable_settings = blinds.each_with_index.map do |blind, idx|
             name = blind[:title] || "Blind #{idx + 1}"
-            self[name.to_sym] = blind.slice :module, :up, :stop, :down
-            @all_blinds << name
+            [name.to_sym, blind.slice(:module, :up, :stop, :down)]
         end
+
+        self[:controls] = Hash[hashable_settings]
     end
 
     def up(blind = :all)
@@ -46,22 +41,24 @@ class Aca::BlindLogic
 
     protected
 
-    # Lookup blind either via it's title or index (1 based, for humans)
-    def config_for(key)
-        key = @all_blinds[key - 1] if key.is_a? Integer
-        self[key.to_sym]
+    # Allow either index or name based lookups
+    def sanitize(blind)
+        blind = self[:controls].keys[key - 1] if blind.is_a? Number
+        blind.to_sym
     end
 
     def move(blind, direction)
-        if blind.to_sym == :all
-            @all_blinds.each do |individual_blind|
+        blind = sanitize blind
+
+        if blind == :all
+            self[:controls].each do |individual_blind|
                 move individual_blind, direction
             end
             return
         end
 
         begin
-            config = conifg_for blind
+            config = self[:controls][blind]
 
             mod = config[:module]
             cmd = config[direction]
