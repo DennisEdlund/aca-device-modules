@@ -43,19 +43,20 @@ class Aca::BlindLogic
 
     # Allow either index or name based lookups
     def sanitize(blind)
-        blind = self[:controls].keys[key - 1] if blind.is_a? Number
+        blind = self[:controls].keys[blind - 1] if blind.is_a? Integer
         blind.to_sym
+    end
+
+    def move_all(direction)
+        self[:controls].keys.each do |individual_blind|
+            move individual_blind, direction
+        end
     end
 
     def move(blind, direction)
         blind = sanitize blind
 
-        if blind == :all
-            self[:controls].each do |individual_blind|
-                move individual_blind, direction
-            end
-            return
-        end
+        return move_all direction if blind == :all
 
         begin
             config = self[:controls][blind]
