@@ -14,14 +14,10 @@ class Aca::BlindLogic
     def on_update
         blinds = setting :blinds
 
-        config = ->(blind) { blind.slice :module, :up, :stop, :down }
-        title = ->(blind, fallback) { blind[:title] || fallback }
-
-        hashable_settings = blinds.each_with_index.map do |blind, idx|
-            [title[blind, "Blind #{idx + 1}"], config[blind]]
+        blinds.each_with_index do |blind, idx|
+            name = blind[:title] || "Blind #{idx + 1}"
+            self[name.to_sym] = blind.slice :module, :up, :stop, :down
         end
-
-        self[:blinds] = Hash[hashable_settings]
     end
 
     def up(blind = :all)
@@ -45,25 +41,24 @@ class Aca::BlindLogic
 
     # Lookup blind either via it's title or index (1 based, for humans)
     def config_for(key)
-        if key.is_a? Integer
-            self[:blinds].values[key - 1]
-        else
-            self[:blinds][key]
-        end
+        key = "Blind #{key}" if key.is_a? Integer
+        self[key.to_sym]
     end
 
     def move(blind, direction)
         if blind.to_sym == :all
-            self[:blinds].keys.each { |key| move key, direction }
+            atrribute_names.each do |individual_blind|
+                move individual_blind, direction
+            end
             return
         end
 
-        config = conifg_for blind
-
-        mod = config[:module]
-        cmd = config[direction]
-
         begin
+            config = conifg_for blind
+
+            mod = config[:module]
+            cmd = config[direction]
+
             system.get_implicit(mod).method_missing(cmd[:func], *cmd[:args])
         rescue => details
             logger.print_error details, "moving blind #{blind} #{direction}"
