@@ -3,7 +3,7 @@ module Aca; end
 class Aca::BlindLogic
     include ::Orchestrator::Constants
 
-    descriptive_name 'Blind Control Logic'
+    descriptive_name 'ACA Blind Control Logic'
     generic_name :Blinds
     implements :logic
 
