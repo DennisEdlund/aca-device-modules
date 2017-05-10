@@ -79,7 +79,7 @@ class Aca::MyTurn
     def on_unload; end
 
     def on_update
-        self[:preview_disabled] = setting(:preview_disabled) || false
+        self[:preview_disabled] = setting(:myturn_preview_disabled) || false
         rebind_module
     end
 
