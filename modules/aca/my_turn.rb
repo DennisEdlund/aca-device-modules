@@ -79,6 +79,7 @@ class Aca::MyTurn
     def on_unload; end
 
     def on_update
+        self[:preview_disabled] = setting(:preview_disabled) || false
         rebind_module
     end
 
@@ -102,8 +103,8 @@ class Aca::MyTurn
     end
 
     def preview(source, replace: :none)
-        if self[:switching_disabled]
-            logger.debug 'MyTurn switching disabled, ignoring preview request'
+        if self[:switching_disabled] || self[:preview_disabled]
+            logger.debug 'MyTurn switching and/or preview disabled, ignoring preview request'
         else
             logger.debug { "Adding #{source} to MyTurn previews" }
             preview_actual source.to_sym, replace.to_sym
