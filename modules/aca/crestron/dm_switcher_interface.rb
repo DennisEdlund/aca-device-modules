@@ -51,10 +51,9 @@ class Aca::Crestron::DmSwitcherInterface
     def switch(map)
         # Update output mappings
         map.each do |input, outputs|
-            outputs = [outputs] unless outputs.class == Array
-            input = input.to_s if input.class == Symbol
-            input = input.to_i if input.class == String
-            outputs.each do |output|
+            input = input.to_s.to_i unless input.is_a?(Integer)
+
+            Array(outputs).each do |output|
                 output = output.to_i
 
                 if output < 17
@@ -62,6 +61,7 @@ class Aca::Crestron::DmSwitcherInterface
                     self["video#{output}"] = input
                 else
                     # outputs above 16 are considered audio
+                    # NOTE:: This is legacy code used at TafeSA
                     audioOut = output - 16
                     @audio[audioOut] = input
                     self["audio#{audioOut}"] = input
@@ -80,6 +80,26 @@ class Aca::Crestron::DmSwitcherInterface
         send(@audio[0..17])         # ensure correct command length
     end
     alias :switch_video :switch
+
+
+    def switch_audio(map)
+        # Update output mappings
+        map.each do |input, outputs|
+            input = input.to_s.to_i unless input.is_a?(Integer)
+
+            Array(outputs).each do |output|
+                output = output.to_i
+
+                @audio[output] = input
+                self["audio#{output}"] = input
+            end
+        end
+
+        # Perform the audio switch
+        @audio[0] = TYPE[:audio]     # audio switch command
+        @audio[17] = 0xff             # ff == delimiter
+        send(@audio[0..17])         # ensure correct command length
+    end
 
 
     protected
