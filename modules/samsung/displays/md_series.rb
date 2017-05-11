@@ -218,20 +218,22 @@ DESC
     #
     # Maintain connection
     def do_poll
-        req = power?(priority: 0)
+        req = do_send(:hard_off, [], priority: 0)
         req.then do
-            if self[:power] == On
-                do_send(:volume, [], priority: 0)
-                do_send(:input,  [], priority: 0)
+            unless self[:hard_off]
+                power?(priority: 0) do
+                    if self[:power] == On
+                        do_send(:volume, [], priority: 0)
+                        do_send(:input,  [], priority: 0)
+                    end
+                end
             end
         end
 
         # May have been powered off by the remote?
         # Samsung requires you disconnect after a hard power off
         # otherwise it will just ignore all requests
-        if self[:connected]
-            req.catch { disconnect unless @disconnecting }
-        end
+        req.catch { disconnect unless @disconnecting || !self[:connected] }
     end
 
 
@@ -324,6 +326,8 @@ DESC
                     end
                 when :speaker
                     self[:speaker] = Speaker_Modes[value]
+                when :hard_off
+                    self[:hard_off] = value == 0
                 end
 
                 return :success
