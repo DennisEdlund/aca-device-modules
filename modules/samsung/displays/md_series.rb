@@ -71,6 +71,7 @@ DESC
         # Disconnected may be called without calling connected
         #   Hence the check if timer is nil here
         #
+        @disconnecting = false
         self[:power] = false  # As we may need to use wake on lan
         schedule.clear
     end
@@ -123,7 +124,8 @@ DESC
     def hard_off
         do_send(:hard_off, 0).finally do
             # Actually takes awhile to shutdown!
-            schedule.in('10s') do
+            @disconnecting = true
+            schedule.in('60s') do
                 disconnect
             end
         end
@@ -216,11 +218,19 @@ DESC
     #
     # Maintain connection
     def do_poll
-        power?({:priority => 0}) do
+        req = power?(priority: 0)
+        req.then do
             if self[:power] == On
-                do_send(:volume, [], {:priority => 0})
-                do_send(:input, [], {:priority => 0})
+                do_send(:volume, [], priority: 0)
+                do_send(:input,  [], priority: 0)
             end
+        end
+
+        # May have been powered off by the remote?
+        # Samsung requires you disconnect after a hard power off
+        # otherwise it will just ignore all requests
+        if self[:connected]
+            req.catch { disconnect unless @disconnecting }
         end
     end
 
