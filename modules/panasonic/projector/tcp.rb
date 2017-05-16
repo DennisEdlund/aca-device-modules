@@ -43,8 +43,9 @@ class Panasonic::Projector::Tcp
         # The projector drops the connection when there is no activity
         schedule.every('60s') do
             if self[:connected]
-                power?({priority: 0})
-                lamp_hours?(priority: 0)
+                power?(priority: 0).then do
+                    lamp_hours?(priority: 0) if self[:power]
+                end
             end
         end
 
@@ -84,23 +85,23 @@ class Panasonic::Projector::Tcp
         self[:stable_state] = false
         if is_affirmative?(state)
             self[:power_target] = On
-            do_send(:power_on, {:retries => 10, :name => :power, delay_on_receive: 8000})
+            do_send(:power_on, retries: 10, name: :power, delay_on_receive: 8000)
             logger.debug "-- panasonic Proj, requested to power on"
             do_send(:lamp)
         else
             self[:power_target] = Off
-            do_send(:power_off, {:retries => 10, :name => :power, delay_on_receive: 8000})
+            do_send(:power_off, retries: 10, name: :power, delay_on_receive: 8000)
             logger.debug "-- panasonic Proj, requested to power off"
             do_send(:lamp)
         end
     end
 
-    def power?(options = {}, &block)
+    def power?(**options, &block)
         options[:emit] = block if block_given?
         do_send(:lamp, options)
     end
 
-    def lamp_hours?(options = {})
+    def lamp_hours?(**options, &block)
         options[:emit] = block if block_given?
         do_send(:lamp_hours, 1, options)
     end
@@ -131,7 +132,7 @@ class Panasonic::Projector::Tcp
         # Projector doesn't automatically unmute
         unmute if self[:mute]
         
-        do_send(:input, INPUTS[input], {:retries => 10, delay_on_receive: 2000})
+        do_send(:input, INPUTS[input], retries: 10, delay_on_receive: 2000)
         logger.debug "-- panasonic Proj, requested to switch to: #{input}"
         
         self[:input] = input    # for a responsive UI
@@ -225,7 +226,7 @@ class Panasonic::Projector::Tcp
                             schedule.in('13s') do
                                 @check_scheduled = false
                                 logger.debug "-- checking panasonic state"
-                                power?({:priority => 0}) do
+                                power?(priority: 0) do
                                     state = self[:power]
                                     if state != self[:power_target]
                                         if self[:power_target] || !self[:cooling]
@@ -255,7 +256,7 @@ class Panasonic::Projector::Tcp
     protected
 
 
-    def do_send(command, param = nil, options = {})
+    def do_send(command, param = nil, **options)
         if param.is_a? Hash
             options = param
             param = nil
