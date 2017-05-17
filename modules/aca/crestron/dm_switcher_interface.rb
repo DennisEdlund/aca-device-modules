@@ -59,7 +59,7 @@ class Aca::Crestron::DmSwitcherInterface
         end
 
         @relays[1] = bitmap
-        send(@relays[0..2])
+        send(@relays[0..2], options)
     end
 
 
