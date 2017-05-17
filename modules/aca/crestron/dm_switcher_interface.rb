@@ -23,9 +23,11 @@ class Aca::Crestron::DmSwitcherInterface
         # Outputs (1 == switch)
         @outputs = [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0xFF]
         @audio = [2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0xFF]
+        @relays = [3,0,0xFF]
     end
     
     def connected
+        send(@relays[0..2])
         send("status\xff", wait: true)
 
         # Maintain connection
@@ -37,6 +39,27 @@ class Aca::Crestron::DmSwitcherInterface
     
     def disconnected
         schedule.clear
+    end
+
+    # Index starting at 0
+    def relay(index, state, **options)
+        bitmap = @relays[1]
+        
+        bit = (1 << index) & 0xff
+        return 'invalid index' if bit == 0
+
+        bitmap = if state
+            # Use OR to toggle on the single bit
+            bitmap | bit
+        else
+            # invert the byte
+            bit = bit ^ 0xff
+            # Use AND to toggle off the single bit
+            bitmap & bit
+        end
+
+        @relays[1] = bitmap
+        send(@relays[0..2])
     end
 
 
