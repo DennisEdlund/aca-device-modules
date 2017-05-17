@@ -141,7 +141,11 @@ class Amx::Svsi::NSeriesEncoder
 
     def do_send(*args, **options)
         command = "#{args.join(':')}\r"
-        send command, options
+        send(command, options).catch do |err|
+            # Speed up disconnect
+            disconnect
+            thread.reject(err)
+        end
     end
 
 end
