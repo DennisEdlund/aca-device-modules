@@ -36,16 +36,15 @@ class Panasonic::Projector::Tcp
         @check_scheduled = false
         self[:power] = false
         self[:stable_state] = true  # Stable by default (allows manual on and off)
-        
+
         # Meta data for inquiring interfaces
         self[:type] = :projector
-        
+
         # The projector drops the connection when there is no activity
         schedule.every('60s') do
             if self[:connected]
-                power?(priority: 0).then do
-                    lamp_hours?(priority: 0) if self[:power]
-                end
+                power?(priority: 0)
+                lamp_hours?(priority: 0)
             end
         end
 
@@ -56,7 +55,7 @@ class Panasonic::Projector::Tcp
         @username = setting(:username) || 'admin1'
         @password = setting(:password) || 'panasonic'
     end
-    
+
     def connected
     end
 
@@ -75,9 +74,9 @@ class Panasonic::Projector::Tcp
         lamp_hours: :"Q$L"
     }
     COMMANDS.merge!(COMMANDS.invert)
-    
-    
-    
+
+
+
     #
     # Power commands
     #
@@ -86,13 +85,14 @@ class Panasonic::Projector::Tcp
         if is_affirmative?(state)
             self[:power_target] = On
             do_send(:power_on, retries: 10, name: :power, delay_on_receive: 8000)
-            logger.debug "-- panasonic Proj, requested to power on"
+            logger.debug "requested to power on"
             do_send(:lamp)
         else
             self[:power_target] = Off
-            do_send(:power_off, retries: 10, name: :power, delay_on_receive: 8000)
-            logger.debug "-- panasonic Proj, requested to power off"
-            do_send(:lamp)
+            do_send(:power_off, retries: 10, name: :power, delay_on_receive: 8000).then do
+                schedule.in('10s') { do_send(:lamp) }
+            end
+            logger.debug "requested to power off"
         end
     end
 
@@ -105,66 +105,66 @@ class Panasonic::Projector::Tcp
         options[:emit] = block if block_given?
         do_send(:lamp_hours, 1, options)
     end
-    
-    
-    
+
+
+
     #
     # Input selection
     #
     INPUTS = {
-        :hdmi => :HD1,
-        :hdmi2 => :HD2,
-        :vga => :RG1,
-        :vga2 => :RG2,
-        :miracast => :MC1,
-        :dvi => :DVI,
-        :displayport => :DP1,
-        :hdbaset => :DL1,
-        :composite => :VID
+        hdmi: :HD1,
+        hdmi2: :HD2,
+        vga: :RG1,
+        vga2: :RG2,
+        miracast: :MC1,
+        dvi: :DVI,
+        displayport: :DP1,
+        hdbaset: :DL1,
+        composite: :VID
     }
     INPUTS.merge!(INPUTS.invert)
-    
-    
+
+
     def switch_to(input)
         input = input.to_sym
         return unless INPUTS.has_key? input
 
         # Projector doesn't automatically unmute
         unmute if self[:mute]
-        
+
         do_send(:input, INPUTS[input], retries: 10, delay_on_receive: 2000)
-        logger.debug "-- panasonic Proj, requested to switch to: #{input}"
-        
+        logger.debug "requested to switch to: #{input}"
+
         self[:input] = input    # for a responsive UI
     end
-    
-    
+
+
     #
     # Mute Audio and Video
     #
     def mute(val = true)
         actual = val ? 1 : 0
-        logger.debug "-- panasonic Proj, requested to mute"
+        logger.debug "requested to mute"
         do_send(:mute, actual)    # Audio + Video
     end
 
     def unmute
-        logger.debug "-- panasonic Proj, requested to unmute"
+        logger.debug "requested to unmute"
         do_send(:mute, 0)
     end
-    
-    
+
+
     ERRORS = {
-        :ERR1 => '1: Undefined control command'.freeze,
-        :ERR2 => '2: Out of parameter range'.freeze,
-        :ERR3 => '3: Busy state or no-acceptable period'.freeze,
-        :ERR4 => '4: Timeout or no-acceptable period'.freeze,
-        :ERR5 => '5: Wrong data length'.freeze,
-        :ERRA => 'A: Password mismatch'.freeze,
-        :ER401 => '401: Command cannot be executed'.freeze,
-        :ER402 => '402: Invalid parameter is sent'.freeze
+        ERR1: '1: Undefined control command',
+        ERR2: '2: Out of parameter range',
+        ERR3: '3: Busy state or no-acceptable period',
+        ERR4: '4: Timeout or no-acceptable period',
+        ERR5: '5: Wrong data length',
+        ERRA: 'A: Password mismatch',
+        ER401: '401: Command cannot be executed',
+        ER402: '402: Invalid parameter is sent'
     }
-    
+
 
     def received(data, resolve, command)        # Data is default received as a string
         logger.debug { "sent \"#{data}\" for #{command ? command[:data] : 'unknown'}" }
@@ -187,10 +187,10 @@ class Panasonic::Projector::Tcp
 
                 # Check for busy or timeout
                 if error == :ERR3 || error == :ERR4
-                    logger.warn "Panasonic Proj busy: #{self[:last_error]}"
+                    logger.warn "Proj busy: #{self[:last_error]}"
                     return :retry
                 else
-                    logger.error "Panasonic Proj error: #{self[:last_error]}"
+                    logger.error "Proj error: #{self[:last_error]}"
                     return :abort
                 end
             end
@@ -220,12 +220,12 @@ class Panasonic::Projector::Tcp
                         self[:power] = ival == 1 || ival == 2
                         self[:warming] = ival == 1
                         self[:cooling] = ival == 3
-        
+
                         if (self[:warming] || self[:cooling]) && !@check_scheduled && !self[:stable_state]
                             @check_scheduled = true
                             schedule.in('13s') do
                                 @check_scheduled = false
-                                logger.debug "-- checking panasonic state"
+                                logger.debug "-- checking state"
                                 power?(priority: 0) do
                                     state = self[:power]
                                     if state != self[:power_target]
@@ -252,7 +252,7 @@ class Panasonic::Projector::Tcp
         :success
     end
 
-    
+
     protected
 
 
