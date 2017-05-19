@@ -7,6 +7,11 @@ class Aca::SkypeLogic
     generic_name :Skype
     implements :logic
 
+    def dial_link(uri)
+        self[:uri] = uri
+        self[:dial_link] = !self[:dial_link]
+    end
+
     def incomming_call(state)
         self[:incomming_call] = !!state
     end
@@ -27,5 +32,9 @@ class Aca::SkypeLogic
 
     def mute(state)
         self[:mute] = !!state
+    end
+
+    def in_call(state)
+        self[:in_call] = !!state
     end
 end
