@@ -7,6 +7,12 @@ class Aca::SkypeLogic
     generic_name :Skype
     implements :logic
 
+
+    def on_update
+        self[:room_user] = setting(:room_user)
+    end
+
+
     def dial_link(uri)
         self[:uri] = uri
         self[:dial_link] = !self[:dial_link]
@@ -36,5 +42,9 @@ class Aca::SkypeLogic
 
     def in_call(state)
         self[:in_call] = !!state
+    end
+
+    def room_user(name)
+        self[:room_user] = name
     end
 end
