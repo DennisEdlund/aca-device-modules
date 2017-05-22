@@ -517,6 +517,9 @@ class Aca::MeetingRoom < Aca::Joiner
 
             # Update the mic mappings
             self[:mics] = mode[:mics] || setting(:mics)
+            
+            # Update the preview mappings
+            self[:has_preview] = mode[:has_preview] || setting(:has_preview)
 
             # Update and save out the new mode
             self[:current_mode] = mode_name
@@ -537,6 +540,9 @@ class Aca::MeetingRoom < Aca::Joiner
                 sys[:Switcher].switch(mode[:routes]) if mode[:routes]
                 sys[:Lighting].trigger(@light_group, mode[:light_preset]) if mode[:light_preset]
                 sys[:VideoWall].preset(mode[:videowall_preset]) if mode[:videowall_preset]
+                # Route currently selected source to any added preview screens
+                preview(self[self[:tab]][0])
+
 
                 if mode[:execute]
                     mode[:execute].each do |cmd|
