@@ -541,7 +541,7 @@ class Aca::MeetingRoom < Aca::Joiner
                 sys[:Lighting].trigger(@light_group, mode[:light_preset]) if mode[:light_preset]
                 sys[:VideoWall].preset(mode[:videowall_preset]) if mode[:videowall_preset]
                 # Route currently selected source to any added preview screens
-                preview(self[self[:tab]][0])
+                preview(self[self[:tab]][0]) if self[:has_preview]
 
 
                 if mode[:execute]
