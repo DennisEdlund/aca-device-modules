@@ -11,16 +11,16 @@ class Aca::SkypeLogic
     def on_load
         self[:accept_call] = 0
         self[:hang_up] = 0
-    end
-
-    def on_update
-        self[:room_user] = setting(:room_user)
+        self[:call_uri] = 0
     end
 
 
-    def dial_link(uri)
+    def set_uri(uri)
         self[:uri] = uri
-        self[:dial_link] = !self[:dial_link]
+    end
+
+    def call_uri
+        self[:call_uri] += 1
     end
 
     def incoming_call(state, remote = nil)
@@ -30,6 +30,12 @@ class Aca::SkypeLogic
 
     def accept_call
         self[:accept_call] += 1
+
+        if not self[:in_call]
+            schedule.in('1s') do
+                self[:mute] = true
+            end
+        end
     end
 
     def hang_up
