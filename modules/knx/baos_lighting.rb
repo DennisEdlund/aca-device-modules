@@ -143,7 +143,7 @@ Settings:
                         logger.warn "Unknown value #{item.value.bytes} for known index #{value_id} in area #{area}"
                     end
                 else
-                    self["index_#{value_id}"] = item.value.bytes[0]
+                    self["area#{value_id}_level"] = item.value.bytes[0]
                 end
             end
         else
