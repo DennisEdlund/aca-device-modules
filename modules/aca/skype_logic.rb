@@ -8,6 +8,11 @@ class Aca::SkypeLogic
     implements :logic
 
 
+    def on_load
+        self[:accept_call] = 0
+        self[:hang_up] = 0
+    end
+
     def on_update
         self[:room_user] = setting(:room_user)
     end
@@ -18,16 +23,17 @@ class Aca::SkypeLogic
         self[:dial_link] = !self[:dial_link]
     end
 
-    def incoming_call(state)
+    def incoming_call(state, remote = nil)
         self[:incoming_call] = !!state
+        self[:remote] = remote
     end
 
     def accept_call
-        self[:accept_call] = !self[:accept_call]
+        self[:accept_call] += 1
     end
 
     def hang_up
-        self[:hang_up] = !self[:hang_up]
+        self[:hang_up] += 1
     end
 
     def show_self(state)
