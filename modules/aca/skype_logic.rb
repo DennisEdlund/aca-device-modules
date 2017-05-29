@@ -20,6 +20,7 @@ class Aca::SkypeLogic
     end
 
     def call_uri
+        return unless self[:uri].present?
         self[:call_uri] += 1
     end
 
