@@ -105,6 +105,12 @@ class Aca::ExchangeBooking
         self[:booking_hide_description] = setting(:booking_hide_description)
         self[:booking_hide_timeline] = setting(:booking_hide_timeline)
 
+        # Skype join button available 2min before the start of a meeting
+        @skype_start_offset = setting(:skype_start_offset) || 120
+
+        # Skype join button not available in the last 8min of a meeting
+        @skype_end_offset = setting(:skype_end_offset) || 480
+
         # Because restarting the modules results in a 'swipe' of the last read card
         ignore_first_swipe = true
 
@@ -566,13 +572,42 @@ class Aca::ExchangeBooking
             items = cli.find_items({:folder_id => :calendar, :calendar_view => {:start_date => start.utc.iso8601, :end_date => ending.utc.iso8601}})
         end
 
+        skype_exists = set_skype_url = system.exists?(:Skype)
+        now_int = now.to_i
+
         items.select! { |booking| !booking.cancelled? }
-        items.collect do |meeting|
+        results = items.collect do |meeting|
             item = meeting.ews_item
             start = item[:start][:text]
             ending = item[:end][:text]
 
-            if @timezone
+            # Extract the skype meeting URL
+            if set_skype_url
+                real_start = Time.parse(start)
+                start_integer = real_start.to_i - @skype_start_offset
+                real_end = Time.parse(ending)
+                end_integer = real_end.to_i - @skype_end_offset
+
+                if now_int > start_integer && now_int < end_integer
+                    meeting.get_all_properties!
+
+                    # Lync: <a name="OutJoinLink">
+                    # Skype: <a name="x_OutJoinLink">
+                    body_parts = meeting.body.split('OutJoinLink"')
+                    if body_parts.length > 1
+                        links = body_parts[-1].split('"').select { |link| link.start_with?('https://') }
+                        if links[0].present?
+                            set_skype_url = false
+                            system[:Skype].set_uri(links[0])
+                        end
+                    end
+                end
+
+                if @timezone
+                    start = real_start.in_time_zone(@timezone).iso8601[0..18]
+                    ending = real_end.in_time_zone(@timezone).iso8601[0..18]
+                end
+            elsif @timezone
                 start = Time.parse(start).in_time_zone(@timezone).iso8601[0..18]
                 ending = Time.parse(ending).in_time_zone(@timezone).iso8601[0..18]
             end
@@ -586,6 +621,10 @@ class Aca::ExchangeBooking
                 :breakdown => 0
             }
         end
+
+        system[:Skype].set_uri(nil) if skype_exists && set_skype_url
+
+        results
     end
     # =======================================
 end
