@@ -19,7 +19,8 @@ class Aca::SkypeLogic
         self[:uri] = uri
     end
 
-    def call_uri
+    def call_uri(uri = nil)
+        self[:uri] = uri if uri
         return unless self[:uri].present?
         self[:call_uri] += 1
     end
