@@ -283,7 +283,7 @@ class Aca::FindmeBooking
         define_setting(:last_meeting_started, meeting_ref)
     end
 
-    def cancel_meeting(start_time)
+    def cancel_meeting(start_time, *args)
         task {
             delete_ews_booking (start_time / 1000).to_i
         }.then(proc { |count|
