@@ -45,7 +45,7 @@ class Philips::Dynalite
         self[:"area#{area}"] = number
         area = area.to_i
         number = number.to_i
-        fade = (fade / 10).to_i
+        fade = (fade.to_i / 10).to_i
 
         # No response so we should update status here
         self[:"area#{area}"] = number
@@ -60,6 +60,9 @@ class Philips::Dynalite
                                                        #high fade   #join (currently all in group)
         command = [0x1c, area & 0xFF, fade & 0xFF, number & 0xFF, (fade >> 8) & 0xFF, bank, 0xFF]
 
+        schedule.in(fade + 200) do
+            get_light_level(area)
+        end
         do_send(command, {name: :"preset_#{area}_#{number}"})
     end
     # Seems to be an undocument trigger command with opcode 65
