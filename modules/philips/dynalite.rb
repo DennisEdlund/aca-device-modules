@@ -34,8 +34,8 @@ class Philips::Dynalite
         #
         schedule.clear
     end
-    
-    
+
+
     #
     # Arguments: preset_number, area_number, fade_time in millisecond
     #    Trigger for CBUS module compatibility
@@ -92,6 +92,9 @@ class Philips::Dynalite
             fade = in_range((fade / 60000).to_i, 22, 1)
         end
 
+        level = level.to_i
+        channel = channel.to_i
+
         # Ensure status values are valid
         if channel == 0xFF # Area (all channels)
             self[:"area#{area}_level"] = level
@@ -102,10 +105,10 @@ class Philips::Dynalite
         # Levels
         #0x01 == 100%
         #0xFF == 0%
-        level = 0xFF - level.to_i          # Inverse
+        level = 0xFF - level          # Inverse
         level = in_range(level, 0xFF, 1)
 
-        command = [0x1c, area & 0xFF, channel & 0xFF, cmd, level, fade & 0xFF, 0xFF]
+        command = [0x1c, area.to_i & 0xFF, channel & 0xFF, cmd, level, fade & 0xFF, 0xFF]
         do_send(command, {name: :"level_#{area}_#{channel}"})
     end
 
