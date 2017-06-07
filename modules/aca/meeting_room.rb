@@ -1097,7 +1097,7 @@ class Aca::MeetingRoom < Aca::Joiner
             case disp_source[:switch_type]
             when "video"
               switcher.switch_video({disp_source[:input] => disp_info[:output]})
-              switcher.switch_audio("0" => disp_info[:output]})
+              switcher.switch_audio({"0" => disp_info[:output]})
             when "audio"
               switcher.switch_audio({disp_source[:input] => disp_info[:output]})
             else
