@@ -81,6 +81,11 @@ Settings:
     def light_level(index, level)
         send_request index, level.to_i
     end
+
+    def lighting(index, state)
+        val = is_affirmative?(state) ? 1 : 0
+        send_request index, val
+    end
     # ==================================
 
 
