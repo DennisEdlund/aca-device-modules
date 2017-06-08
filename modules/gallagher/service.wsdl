@@ -1,0 +1,602 @@
+<wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:tns="http://tempuri.org/" xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing" xmlns:wsx="http://schemas.xmlsoap.org/ws/2004/09/mex" xmlns:wsap="http://schemas.xmlsoap.org/ws/2004/08/addressing/policy" xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl" xmlns:msc="http://schemas.microsoft.com/ws/2005/12/wsdl/contract" xmlns:i0="http://www.gallagher.co/security/commandcentre/cifws" xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy" xmlns:wsa10="http://www.w3.org/2005/08/addressing" xmlns:wsam="http://www.w3.org/2007/05/addressing/metadata" name="CifWebService" targetNamespace="http://tempuri.org/">
+<wsp:Policy wsu:Id="BasicHttpBinding_ICifWebService_policy">
+<wsp:ExactlyOne>
+<wsp:All>
+<sp:TransportBinding xmlns:sp="http://schemas.xmlsoap.org/ws/2005/07/securitypolicy">
+<wsp:Policy>
+<sp:TransportToken>
+<wsp:Policy>
+<sp:HttpsToken RequireClientCertificate="true"/>
+</wsp:Policy>
+</sp:TransportToken>
+<sp:AlgorithmSuite>
+<wsp:Policy>
+<sp:Basic256/>
+</wsp:Policy>
+</sp:AlgorithmSuite>
+<sp:Layout>
+<wsp:Policy>
+<sp:Strict/>
+</wsp:Policy>
+</sp:Layout>
+</wsp:Policy>
+</sp:TransportBinding>
+</wsp:All>
+</wsp:ExactlyOne>
+</wsp:Policy>
+<wsdl:import namespace="http://www.gallagher.co/security/commandcentre/cifws" location="https://bb1-b2-vsvreasc-002:8082/Cardholder/?wsdl=wsdl0"/>
+<wsdl:types/>
+<wsdl:binding name="BasicHttpBinding_ICifWebService" type="i0:ICifWebService">
+<wsp:PolicyReference URI="#BasicHttpBinding_ICifWebService_policy"/>
+<soap:binding transport="http://schemas.xmlsoap.org/soap/http"/>
+<wsdl:operation name="Connect">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/webservice/IWebService/Connect" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="ConnectionRefusedFaultFault">
+<soap:fault name="ConnectionRefusedFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="Disconnect">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/webservice/IWebService/Disconnect" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifCardholderExists">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifCardholderExists" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifCreateCardholder">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifCreateCardholder" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifCreateCardholderEx">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifCreateCardholderEx" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifRemoveCardholder">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifRemoveCardholder" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifUpdateCardholderDivision">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifUpdateCardholderDivision" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifUpdateCardholderAuthorised">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifUpdateCardholderAuthorised" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifUpdateCardholderLongName">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifUpdateCardholderLongName" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifUpdateCardholderFirstName">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifUpdateCardholderFirstName" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifUpdateCardholderLastName">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifUpdateCardholderLastName" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifUpdateCardholderShortName">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifUpdateCardholderShortName" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifUpdateCardholderExtendedAccessTime">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifUpdateCardholderExtendedAccessTime" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifUpdateCardholderDescription">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifUpdateCardholderDescription" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifUpdateCardholderUserCode">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifUpdateCardholderUserCode" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifGetCardholderPdf">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifGetCardholderPdf" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifUpdateCardholderPdf">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifUpdateCardholderPdf" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifIssueCard">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifIssueCard" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifIssueCardEx">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifIssueCardEx" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifReissueCard">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifReissueCard" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifRemoveCard">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifRemoveCard" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifRemoveCards">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifRemoveCards" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifEnableCard">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifEnableCard" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifEnableCards">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifEnableCards" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifDisableCard">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifDisableCard" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifDisableCards">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifDisableCards" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifUpdateCardActivation">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifUpdateCardActivation" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifUpdateCardExpiry">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifUpdateCardExpiry" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifQueryCardsByCardholder">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifQueryCardsByCardholder" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifAssignCompetency">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifAssignCompetency" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifRemoveCompetency">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifRemoveCompetency" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifEnableCompetency">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifEnableCompetency" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifDisableCompetency">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifDisableCompetency" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifAssignTemporaryAccess">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifAssignTemporaryAccess" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifAssignPermanentAccess">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifAssignPermanentAccess" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifRemoveTemporaryAccess">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifRemoveTemporaryAccess" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifRemovePermanentAccess">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifRemovePermanentAccess" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+<wsdl:operation name="CifRemoveAllAccess">
+<soap:operation soapAction="http://www.gallagher.co/security/commandcentre/cifws/ICifWebService/CifRemoveAllAccess" style="document"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+<wsdl:fault name="SessionTokenNotValidFaultFault">
+<soap:fault name="SessionTokenNotValidFaultFault" use="literal"/>
+</wsdl:fault>
+<wsdl:fault name="OperationFailedFaultFault">
+<soap:fault name="OperationFailedFaultFault" use="literal"/>
+</wsdl:fault>
+</wsdl:operation>
+</wsdl:binding>
+<wsdl:service name="CifWebService">
+<wsdl:port name="BasicHttpBinding_ICifWebService" binding="tns:BasicHttpBinding_ICifWebService">
+<soap:address location="https://bb1-b2-vsvreasc-002:8082/Cardholder/"/>
+</wsdl:port>
+</wsdl:service>
+</wsdl:definitions>
