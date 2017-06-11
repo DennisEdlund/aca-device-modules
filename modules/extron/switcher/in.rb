@@ -35,31 +35,22 @@ class Extron::Switcher::In < Extron::Base
     descriptive_name 'Extron Switcher IN'
     generic_name :Switcher
 
+    def switch_to(input = nil)
+        do_send("#{input}!")
+    end
+
     # nil as these functions can be used to request state too
-    def switch(input = nil)
-        if input.is_a?(Hash)
-            send("#{input.keys[-1]}!")
-        else
-            send("#{input}!")
-        end
+    def switch(map)
+        send("#{input.keys[-1]}!")
     end
 
-    def switch_video(input = nil)
-        if input.is_a?(Hash)
-            send("#{input.keys[-1]}&")
-        else
-            send("#{input}&")
-        end
+    def switch_video(map)
+        send("#{input.keys[-1]}&")
     end
 
-    def switch_audio(input = nil)
-        if input.is_a?(Hash)
-            send("#{input.keys[-1]}$")
-        else
-            send("#{input}$")
-        end
+    def switch_audio(map)
+        send("#{input.keys[-1]}$")
     end
-
 
 
     def mute_video(state = true)
