@@ -37,15 +37,27 @@ class Extron::Switcher::In < Extron::Base
 
     # nil as these functions can be used to request state too
     def switch(input = nil)
-        send("#{input}!")
+        if input.is_a?(Hash)
+            send("#{input.keys[-1]}!")
+        else
+            send("#{input}!")
+        end
     end
 
     def switch_video(input = nil)
-        send("#{input}&")
+        if input.is_a?(Hash)
+            send("#{input.keys[-1]}&")
+        else
+            send("#{input}&")
+        end
     end
 
     def switch_audio(input = nil)
-        send("#{input}$")
+        if input.is_a?(Hash)
+            send("#{input.keys[-1]}$")
+        else
+            send("#{input}$")
+        end
     end
 
 
@@ -140,6 +152,8 @@ class Extron::Switcher::In < Extron::Base
         # Response:  GrpmD#{group}*+00000
     end
 
+    # IN1606 and 1608 have a built in group 8
+    # The fader values are -1000 -> -1
     def fader(group, value, index = nil)    # \e == 0x1B == ESC key
         faders = Array(group)
         faders.each do |fad|
@@ -149,8 +163,11 @@ class Extron::Switcher::In < Extron::Base
         # Response: GrpmD#{group}*#{value}*GRPM
     end
     
-    def fader_status(group, type)
-        do_send("\eD#{group}GRPM", :group_type => type)
+    def fader_status(group, type = :volume)
+        faders = Array(group)
+        faders.each do |fad|
+            do_send("\eD#{fad}GRPM", :group_type => type)
+        end
     end
     
     def fader_relative(group, value)    # \e == 0x1B == ESC key
