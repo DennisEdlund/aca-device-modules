@@ -57,6 +57,20 @@ class Aca::TelevisionLogic
 
         self[:name] = setting(:name) || system.name
         self[:input_list] = setting(:input_list)
+
+        # {"commands": [{"name": "blah", "func": "power", "args": [true]}]}
+        cmds = setting(:commands)
+        if cmds
+            @cmd_lookup = {}
+            self[:commands] = cmds.collect do |cmd|
+                name = cmd[:name]
+                @cmd_lookup[name] = cmd
+                name
+            end
+        else
+            @cmd_lookup = nil
+            self[:commands] = nil
+        end
     end
 
     def goto(channel, save = true)
@@ -75,6 +89,21 @@ class Aca::TelevisionLogic
         else
             logger.warn "Unknown channel #{channel}"
         end
+    end
+
+    def command(name)
+        return unless @cmd_lookup
+        cmd = @cmd_lookup[name]
+        return unless cmd
+
+        mod = if @module
+            system.get_implicit(@module)
+        else
+            system.all(:IPTV)
+        end
+
+        # Calls the function on the module
+        mod.method_missing(cmd[:func], *(cmd[:args] || []))
     end
 
     def power_on
