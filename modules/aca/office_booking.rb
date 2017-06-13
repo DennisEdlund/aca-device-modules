@@ -1,4 +1,5 @@
 require 'faraday'
+require 'uv-rays'
 Faraday.default_adapter = :libuv
 
 # For rounding up to the nearest 15min
@@ -298,7 +299,15 @@ class Aca::OfficeBooking
     def fetch_bookings(*args)
         logger.debug { "looking up todays emails for #{@ews_room}" }
         task {
-            todays_bookings
+            client = OAuth2::Client.new(@office_client_id, @office_client_secret, @office_options)
+
+            access_token = client.client_credentials.get_token({
+                :scope => @office_scope
+                # :client_secret => ENV["OFFICE_APP_CLIENT_SECRET"],
+                # :client_id => ENV["OFFICE_APP_CLIENT_ID"]
+            }).token
+
+            todays_bookings(access_token)
         }.then(proc { |bookings|
             self[:today] = bookings
         }, proc { |e| logger.print_error(e, 'error fetching bookings') })
@@ -559,7 +568,7 @@ class Aca::OfficeBooking
         count
     end
 
-    def todays_bookings
+    def todays_bookings(token)
         now = Time.now
         if @timezone
             start  = now.in_time_zone(@timezone).midnight
@@ -569,32 +578,23 @@ class Aca::OfficeBooking
             ending = now.tomorrow.midnight
         end
 
-        client = OAuth2::Client.new(@office_client_id, @office_client_secret, @office_options)
-
-        access_token = client.client_credentials.get_token({
-            :scope => @office_scope
-            # :client_secret => ENV["OFFICE_APP_CLIENT_SECRET"],
-            # :client_id => ENV["OFFICE_APP_CLIENT_ID"]
-        }).token
 
         # Set out domain, endpoint and content type
         domain = 'https://graph.microsoft.com'
+        host = 'graph.microsoft.com'
         endpoint = "/v1.0/users/#{@office_room}/events"
         content_type = 'application/json;odata.metadata=minimal;odata.streaming=true'
 
 
         # Create the request URI and config
-        get_calendar_endpoint = URI("#{domain}#{endpoint}")
-        http = Net::HTTP.new(get_calendar_endpoint.host, get_calendar_endpoint.port)
-        http.use_ssl = true
+        OFFICE_API = UV::HttpEndpoint.new(domain, tls_options: {host_name: host})
+        headers = {
+            'Authorization' => "Bearer #{access_token}",
+            'Content-Type' => content_type
+        }
 
         # Make the request
-        response = http.get(
-          endpoint,
-          # data,
-          'Authorization' => "Bearer #{access_token}",
-          'Content-Type' => content_type
-        )
+        response = OFFICE_API.get(path: "#{domain}#{endpoint}", headers: headers)
 
         meeting_response = JSON.parse(response.body)
 
