@@ -12,15 +12,19 @@ class ClearOne::Converge
     descriptive_name 'ClearOne Converge'
     generic_name :Mixer
 
-    # Communication settings
-    tokenize delimiter: "\r"
+    # Starts with: "Version 4.4.0.2\r\n\r\n" then requests authenitcation
+    tokenize delimiter: "\r\n", wait_ready: /Version.+\r\n/i
+    clear_queue_on_disconnect!
+
 
     # Nexia requires some breathing room
     delay between_sends: 30, on_receive: 30
 
     default_settings({
         device_type: '*',
-        device_id: '*'
+        device_id: '*',
+        username: 'clearone',
+        password: 'converge'
     })
 
 
@@ -29,13 +33,13 @@ class ClearOne::Converge
     end
     
     def on_update
-        @device_type = self[:device_type]
-        @device_id = self[:device_id]
+        @device_type = setting(:device_type)
+        @device_id = setting(:device_id)
     end
     
     
     def connected
-
+        self[:authenticated] = false
     end
     
     def disconnected
@@ -116,7 +120,16 @@ class ClearOne::Converge
 
 
     def received(data, resolve, command)
-        logger.debug { "received #{data}" }
+        logger.debug { "received #{data.inspect}" }
+
+        if data.empty? && !self[:authenticated]
+            send "#{setting(:username)}\r\n", priority: 999
+        elsif data =~ /user/i
+            send "#{setting(:password)}\r\n", priority: 999
+        elsif data == 'Authenticated.'
+            self[:authenticated] = true
+        end
+
         return :success
     end
 
