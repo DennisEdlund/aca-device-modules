@@ -19,7 +19,7 @@ module Aca; end
 # building: 'DP3',
 # level: '16'
 
-class Aca::ExchangeBooking
+class Aca::OfficeBooking
     include ::Orchestrator::Constants
     EMAIL_CACHE = ::Concurrent::Map.new
     CAN_LDAP = begin
