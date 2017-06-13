@@ -37,7 +37,7 @@ class Aca::OfficeBooking
 
 
     descriptive_name 'Office365 Room Bookings'
-    generic_name :OfficeBookings
+    generic_name :Bookings
     implements :logic
 
 
