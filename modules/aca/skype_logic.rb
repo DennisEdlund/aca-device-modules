@@ -12,6 +12,8 @@ class Aca::SkypeLogic
         self[:accept_call] = 0
         self[:hang_up] = 0
         self[:call_uri] = 0
+
+        @mic_mutes = setting(:mics_mutes)
     end
 
 
@@ -50,6 +52,10 @@ class Aca::SkypeLogic
 
     def mute(state)
         self[:mute] = !!state
+
+        if @mic_mutes && !@mic_mutes.empty?
+            system[:Mixer].mute(@mic_mutes, self[:mute])
+        end
     end
 
     def video_mute(state)
