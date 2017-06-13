@@ -610,8 +610,8 @@ class Aca::ExchangeBooking
             results.push({
                 :Start => start_time,
                 :End => end_time,
-                :Subject => title: booking['subject'],
-                :owner => 'Temp',
+                :Subject => booking['subject'],
+                :owner => 'Temp'
                 # :setup => 0,
                 # :breakdown => 0
             })
