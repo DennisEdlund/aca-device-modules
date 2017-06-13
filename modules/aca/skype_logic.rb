@@ -37,7 +37,7 @@ class Aca::SkypeLogic
 
         if not self[:in_call]
             schedule.in('1s') do
-                self[:mute] = true
+                mute(true)
             end
         end
     end
