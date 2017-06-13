@@ -61,7 +61,7 @@ class Strong::Receiver::Srt5Srt7
     # Make compatible with IPTV systems
     def channel(number)
         nums = number.to_s.each_char.to_a
-        nums[0..-1].each do |char|
+        nums[0..-2].each do |char|
             num(char)
         end
         num(nums[-1], delay: 1300)
