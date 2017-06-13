@@ -35,19 +35,22 @@ class Extron::Switcher::In < Extron::Base
     descriptive_name 'Extron Switcher IN'
     generic_name :Switcher
 
+    def switch_to(input = nil)
+        do_send("#{input}!")
+    end
+
     # nil as these functions can be used to request state too
-    def switch(input = nil)
-        send("#{input}!")
+    def switch(map)
+        send("#{input.keys[-1]}!")
     end
 
-    def switch_video(input = nil)
-        send("#{input}&")
+    def switch_video(map)
+        send("#{input.keys[-1]}&")
     end
 
-    def switch_audio(input = nil)
-        send("#{input}$")
+    def switch_audio(map)
+        send("#{input.keys[-1]}$")
     end
-
 
 
     def mute_video(state = true)
@@ -123,6 +126,8 @@ class Extron::Switcher::In < Extron::Base
     #
     # Output control
     #
+
+    # IN1606 and 1608 have a built in group 7 for mute
     def mute_audio(group, value = true, index = nil)
         group = index if index
         val = is_affirmative?(value) ? 1 : 0
@@ -133,13 +138,21 @@ class Extron::Switcher::In < Extron::Base
         end
         # Response:  GrpmD#{group}*+00001
     end
+    alias_method :mute, :mute_audio
 
     def unmute_audio(group, index = nil)
         mute(group, false, index)
         #do_send("\eD#{group}*0GRPM", :group_type => :mute)
         # Response:  GrpmD#{group}*+00000
     end
+    alias_method :unmute, :unmute_audio
 
+    def mutes(ids:, muted: true, **_)
+        mute(ids, muted)
+    end
+
+    # IN1606 and 1608 have a built in group 8
+    # The fader values are -1000 -> -1
     def fader(group, value, index = nil)    # \e == 0x1B == ESC key
         faders = Array(group)
         faders.each do |fad|
@@ -148,9 +161,21 @@ class Extron::Switcher::In < Extron::Base
         
         # Response: GrpmD#{group}*#{value}*GRPM
     end
+
+    def faders(ids:, level:, mixer_index: nil)
+        fader(ids, level, mixer_index)
+    end
     
-    def fader_status(group, type)
-        do_send("\eD#{group}GRPM", :group_type => type)
+    def query_fader(group, type = :volume)
+        faders = Array(group)
+        faders.each do |fad|
+            do_send("\eD#{fad}GRPM", :group_type => type)
+        end
+    end
+
+    # Named params version
+    def query_faders(ids:, **_)
+        query_fader(ids)
     end
     
     def fader_relative(group, value)    # \e == 0x1B == ESC key
@@ -161,6 +186,15 @@ class Extron::Switcher::In < Extron::Base
             do_send("\eD#{group}*#{value}+GRPM")
         end
         # Response: GrpmD#{group}*#{value}*GRPM
+    end
+
+    def query_mute(fader_id)
+        query_fader(fader_id, :mute)
+    end
+
+    # Named params version
+    def query_mutes(ids:, **_)
+        query_fader(ids, :mute)
     end
 
 

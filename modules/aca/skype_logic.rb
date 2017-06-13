@@ -52,6 +52,10 @@ class Aca::SkypeLogic
         self[:mute] = !!state
     end
 
+    def video_mute(state)
+        self[:video_mute] = !!state
+    end
+
     def in_call(state)
         self[:in_call] = !!state
     end

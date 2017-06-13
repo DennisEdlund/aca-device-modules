@@ -123,7 +123,7 @@ class Qsc::QSysControl
 
         faders = Array(fader_id)
         faders.each do |fad|
-            set_value(fad, level, fader_type: :fader)
+            set_value(fad, level, fader_type: :fader, name: :"fader#{fad}")
         end
     end
 
