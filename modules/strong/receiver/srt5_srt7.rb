@@ -55,9 +55,14 @@ class Strong::Receiver::Srt5Srt7
         when 8; 0x18
         when 9; 0x19
         end
-
-        options[:name] = :num_pad
         do_send(val, options)
+    end
+
+    # Make compatible with IPTV systems
+    def channel(number)
+        number.to_s.each_char do |char|
+            num(char)
+        end
     end
 
 
