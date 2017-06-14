@@ -1,3 +1,5 @@
+# encoding: ASCII-8BIT
+
 require 'faraday'
 require 'uv-rays'
 Faraday.default_adapter = :libuv
@@ -145,7 +147,7 @@ class Aca::OfficeBooking
         if CAN_OFFICE
             @office_client_id = setting(:office_client_id)
             @office_secret = setting(:office_secret)
-            @office_scope = setting(:office_scopt)
+            @office_scope = setting(:office_scope)
             @office_options = setting(:office_options)
             @office_room = (setting(:office_room) || system.email) if @office_options
             # supports: SMTP, PSMTP, SID, UPN (user principle name)
@@ -297,17 +299,44 @@ class Aca::OfficeBooking
     # ROOM BOOKINGS:
     # ======================================
     def fetch_bookings(*args)
-        logger.debug { "looking up todays emails for #{@ews_room}" }
+
+        @office_client_id = ENV["OFFICE_APP_CLIENT_ID"]
+        @office_secret = ENV["OFFICE_APP_CLIENT_SECRET"]
+        @office_scope = ENV['OFFICE_APP_SCOPE']
+        @office_options = {
+            site: ENV["OFFICE_APP_SITE"],
+            token_url: ENV["OFFICE_APP_TOKEN_URL"]
+        }
+        @office_room = 'testroom@internationaltowers.com'
+        client = OAuth2::Client.new(@office_client_id, @office_secret, @office_options)
+
+        access_token = client.client_credentials.get_token({
+            :scope => @office_scope
+            # :client_secret => ENV["OFFICE_APP_CLIENT_SECRET"],
+            # :client_id => ENV["OFFICE_APP_CLIENT_ID"]
+        }).token
+
+
+        # Set out domain, endpoint and content type
+        domain = 'https://graph.microsoft.com'
+        host = 'graph.microsoft.com'
+        endpoint = "/v1.0/users/#{@office_room}/events"
+        content_type = 'application/json;odata.metadata=minimal;odata.streaming=true'
+
+        # Create the request URI and config
+        office_api = UV::HttpEndpoint.new(domain, tls_options: {host_name: host})
+        headers = {
+            'Authorization' => "Bearer #{access_token}",
+            'Content-Type' => content_type
+        }
+
+        # Make the request
+        response = office_api.get(path: "#{domain}#{endpoint}", headers: headers).value
+
+
+
         task {
-            client = OAuth2::Client.new(@office_client_id, @office_client_secret, @office_options)
-
-            access_token = client.client_credentials.get_token({
-                :scope => @office_scope
-                # :client_secret => ENV["OFFICE_APP_CLIENT_SECRET"],
-                # :client_id => ENV["OFFICE_APP_CLIENT_ID"]
-            }).token
-
-            todays_bookings(access_token)
+            todays_bookings(response)
         }.then(proc { |bookings|
             self[:today] = bookings
         }, proc { |e| logger.print_error(e, 'error fetching bookings') })
@@ -568,44 +597,20 @@ class Aca::OfficeBooking
         count
     end
 
-    def todays_bookings(token)
-        now = Time.now
-        if @timezone
-            start  = now.in_time_zone(@timezone).midnight
-            ending = now.in_time_zone(@timezone).tomorrow.midnight
-        else
-            start  = now.midnight
-            ending = now.tomorrow.midnight
-        end
+    def todays_bookings(response)
 
+        meeting_response = JSON.parse(response.body)['value']
 
-        # Set out domain, endpoint and content type
-        domain = 'https://graph.microsoft.com'
-        host = 'graph.microsoft.com'
-        endpoint = "/v1.0/users/#{@office_room}/events"
-        content_type = 'application/json;odata.metadata=minimal;odata.streaming=true'
-
-
-        # Create the request URI and config
-        OFFICE_API = UV::HttpEndpoint.new(domain, tls_options: {host_name: host})
-        headers = {
-            'Authorization' => "Bearer #{access_token}",
-            'Content-Type' => content_type
-        }
-
-        # Make the request
-        response = OFFICE_API.get(path: "#{domain}#{endpoint}", headers: headers)
-
-        meeting_response = JSON.parse(response.body)
+        logger.info meeting_response.to_json
 
         results = []
 
         meeting_response.each{|booking| 
 
-            booking_start_time = Time.parse(booking['start']['dateTime'])
-            booking_end_time = Time.parse(booking['end']['dateTime'])
-            start_time = ActiveSupport::TimeZone.new('America/New_York').local_to_utc(booking_start_time).in_time_zone('Australia/Sydney').iso8601[0..18]
-            end_time = ActiveSupport::TimeZone.new('America/New_York').local_to_utc(booking_end_time).in_time_zone('Australia/Sydney').iso8601[0..18]
+            # start_time = Time.parse(booking['start']['dateTime']).utc.iso8601[0..18] + 'Z'
+            # end_time = Time.parse(booking['end']['dateTime']).utc.iso8601[0..18] + 'Z'
+            start_time = ActiveSupport::TimeZone.new('UTC').parse(booking['start']['dateTime']).iso8601[0..18]
+            end_time = ActiveSupport::TimeZone.new('UTC').parse(booking['end']['dateTime']).iso8601[0..18]
 
             results.push({
                 :Start => start_time,
@@ -617,6 +622,8 @@ class Aca::OfficeBooking
             })
         }
 
+        logger.info "Got #{results.length} results!"
+        logger.info results.to_json
 
         results
     end
