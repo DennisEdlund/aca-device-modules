@@ -15,19 +15,19 @@ Orchestrator::Testing.mock_device 'ClearOne::Converge' do
 
     exec(:preset, 1)
         .should_send("#H* macro 1\r\n")
-        .responds("OK> #H0 MACRO 1\r\n")
+        .responds("OK> \r\nOK> #H0 MACRO 1\r\n")
 
     expect(status[:last_macro]).to be(1)
 
     exec(:fader, 1, -90, 'mic')
         .should_send("#H* GAIN 1 M -65.0 A\r\n")
-        .responds("OK> #H0 GAIN 1 M -65.00 A\r\n")
+        .responds("OK> \r\nOK> #H0 GAIN 1 M -65.00 A\r\n")
 
     expect(status[:fader1_mic]).to be(-65.0)
 
     exec(:mute, 1)
         .should_send("#H* MUTE 1 F 1\r\n")
-        .responds("OK> #H0 MUTE 1 F 1\r\n")
+        .responds("OK> \r\nOK> #H0 MUTE 1 F 1\r\n")
 
     expect(status[:fader1_fader_mute]).to be(true)
 end

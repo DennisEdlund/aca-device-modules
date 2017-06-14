@@ -202,6 +202,9 @@ class ClearOne::Converge
 
         result = data.split('> ')[-1].split(' ')
 
+        # Ignore: "OK> " lines
+        return :success if result[1].nil?
+
         case result[1].downcase.to_sym
         when :mute
             id = result[2]
