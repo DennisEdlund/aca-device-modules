@@ -1,21 +1,15 @@
 Orchestrator::Testing.mock_device 'ClearOne::Converge' do
-    transmit "************\r\n"
-    transmit "* Converge *\r\n"
-    transmit "************\r\n"
-    transmit "Version 4.2.3\r\n"
-    transmit "\r\n"
-    transmit "\r\n"
-
-    transmit "user: "
+    transmit "\r\n************\r\n* Converge *\r\n************\r\nVersion 4.4.0.2\r\n\r\n"
+    transmit "\r\nuser: "
     wait(350)
     should_send "clearone\r\n"
-    transmit "clearone\r\n"
-    
-    transmit "password: "
+
+    transmit "\r\npass"
     wait(350)
     should_send "converge\r\n"
-    transmit "\r\n"
-    transmit "Authenticated.\r\n"
+    
+    transmit "\r\n\r\nAuthenticated.\r\nText Mode Engaged\r\n"
+    transmit "\r\nLevel: Administrator\r\n"
 
     expect(status[:authenticated]).to be(true)
 end

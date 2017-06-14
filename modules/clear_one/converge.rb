@@ -125,6 +125,9 @@ class ClearOne::Converge
             schedule.in(300) { send "#{setting(:password)}\r\n", priority: 999 }
         elsif data == 'Authenticated.'
             self[:authenticated] = true
+        elsif data == 'Invalid User/Pass.'
+            self[:authenticated] = false
+            logger.warn data
         end
 
         return :success
