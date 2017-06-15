@@ -31,7 +31,8 @@ class Denon::Bluray::Dn500bd
     end
 
     def on_update
-        @device_id = self[:device_id] || 0
+        @device_id = setting(:device_id) || 0
+        self[:power] = true
     end
 
 
