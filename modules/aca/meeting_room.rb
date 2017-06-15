@@ -246,6 +246,8 @@ class Aca::MeetingRoom < Aca::Joiner
 
             system[:Switcher].switch({preview_input => self[:has_preview]})
         end
+    rescue => e
+        logger.warn e.message
     end
 
     def join(*ids)
