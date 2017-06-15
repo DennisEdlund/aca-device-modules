@@ -24,11 +24,6 @@ class Panasonic::Projector::Tcp
     # Projector will provide us with a password
     # Which is applied in before_transmit
     before_transmit :apply_password
-
-    # Response time is slow
-    # and as a make break device it may take time
-    # to acctually setup the connection with the projector
-    delay on_receive: 200
     wait_response timeout: 5000, retries: 3
 
 
