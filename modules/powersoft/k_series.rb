@@ -26,19 +26,28 @@ class Powersoft::KSeries
     end
 
     def connected
+        schedule.every('50s') do
+            logger.debug "polling"
+            get_meters
+        end
     end
 
     def disconnected
+        schedule.clear
     end
 
     #
     # Power commands
     #
     def power(state)
-        if is_affirmative?(state)
+        target = is_affirmative?(state)
+        promise = if target
             do_send(0x70, 0x31)
         else
             do_send(0x70, 0x30)
+        end
+        promise.then do
+            self[:power] = target
         end
     end
 
@@ -47,7 +56,7 @@ class Powersoft::KSeries
         do_send(0x6d, 0x30 + index.to_i, val)
     end
 
-    def get_info
+    def get_firmware_ver
         do_send(0x49, priority: 0)
     end
 
