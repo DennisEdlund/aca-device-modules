@@ -21,7 +21,7 @@ class Powersoft::KSeries
     end
 
     def on_update
-        id = (setting(:device_id) || 0).to_s.rjust(2, '0')
+        id = (setting(:device_id) || 65).to_s.rjust(2, '0')
         @device_id = str_to_array(id)
     end
 
