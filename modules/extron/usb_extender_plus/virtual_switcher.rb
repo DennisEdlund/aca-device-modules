@@ -116,8 +116,8 @@ class Extron::UsbExtenderPlus::VirtualSwitcher
         defer = thread.defer
 
         # Check if these devices are already joined
-        host_joined = host[:joined_to].include?(device[:mac_address])
-        device_joined = device[:joined_to].include?(host[:mac_address])
+        host_joined = host[:joined_to]&.include?(device[:mac_address])
+        device_joined = device[:joined_to]&.include?(host[:mac_address])
 
         unless host_joined && device_joined
             host_mac = device[:joined_to][0]
@@ -144,7 +144,7 @@ class Extron::UsbExtenderPlus::VirtualSwitcher
     def unjoin_previous_host(host_mac, device_mac)
         system.all(:USB_Host).each do |host|
             if host[:mac_address] == host_mac
-                if host[:joined_to].include?(device_mac)
+                if host[:joined_to]&.include?(device_mac)
                     logger.debug 'unjoining previous host from device'
                     return host.unjoin(device_mac)
                 else
