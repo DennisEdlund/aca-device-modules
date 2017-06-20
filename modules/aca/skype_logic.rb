@@ -69,4 +69,8 @@ class Aca::SkypeLogic
     def room_user(name)
         self[:room_user] = name
     end
+
+    def state(status)
+        self[:state] = status
+    end
 end

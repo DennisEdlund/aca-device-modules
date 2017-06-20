@@ -9,7 +9,6 @@ class Extron::Base
     tcp_port 23
 
     # Communication settings
-    delay between_sends: 30
     keepalive false
     clear_queue_on_disconnect!
 

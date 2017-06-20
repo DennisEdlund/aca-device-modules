@@ -127,6 +127,13 @@ class Exterity::AvediaPlayer::R92xx
         logger.debug { "Exterity sent #{data}" }
 
         if @ready
+             # Detect if logged out of serialCommandInterface
+            if data =~ /sh: .* not found/i
+                # Launch command processor
+                do_send '/usr/bin/serialCommandInterface', wait: false, delay: 200, priority: 95
+                return :failure
+             end
+          
             # Ignore echos
             if command && command[:data].include?(data)
                 return :ignore
