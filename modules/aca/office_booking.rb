@@ -82,14 +82,16 @@ class Aca::OfficeBooking
         ews_room: 'room@email.address',
 
         # Optional EWS for creating and removing bookings
-        office_client_id: ENV["OFFICE_APP_CLIENT_ID"],
-        office_secret: ENV["OFFICE_APP_CLIENT_SECRET"],
-        office_scope: ENV['OFFICE_APP_SCOPE'],
-        office_options: {
-            site: ENV["OFFICE_APP_SITE"],
-            token_url: ENV["OFFICE_APP_TOKEN_URL"]
-        },
-        office_room: 'room@email.address'
+        # office_client_id: ENV["OFFICE_APP_CLIENT_ID"],
+        # office_secret: ENV["OFFICE_APP_CLIENT_SECRET"],
+        # office_scope: ENV['OFFICE_APP_SCOPE'],
+        # office_site: ENV["OFFICE_APP_SITE"],
+        # office_token_url: ENV["OFFICE_APP_TOKEN_URL"],
+        # office_options: {
+        #     site: ENV["OFFICE_APP_SITE"],
+        #     token_url: ENV["OFFICE_APP_TOKEN_URL"]
+        # },
+        # office_room: 'room@email.address'
     })
 
 
@@ -145,11 +147,14 @@ class Aca::OfficeBooking
 
         # Do we want to use exchange web services to manage bookings
         if CAN_OFFICE
+            logger.debug "Setting OFFICE"
             @office_client_id = setting(:office_client_id)
             @office_secret = setting(:office_secret)
             @office_scope = setting(:office_scope)
+            @office_site = setting(:office_site)
+            @office_token_url = setting(:office_token_url)
             @office_options = setting(:office_options)
-            @office_room = (setting(:office_room) || system.email) if @office_options
+            @office_room = (setting(:office_room) || system.email)
             # supports: SMTP, PSMTP, SID, UPN (user principle name)
             # NOTE:: Using UPN we might be able to remove the LDAP requirement
             @office_connect_type = (setting(:office_connect_type) || :SMTP).to_sym
@@ -300,21 +305,28 @@ class Aca::OfficeBooking
     # ======================================
     def fetch_bookings(*args)
 
-        @office_client_id = ENV["OFFICE_APP_CLIENT_ID"]
-        @office_secret = ENV["OFFICE_APP_CLIENT_SECRET"]
-        @office_scope = ENV['OFFICE_APP_SCOPE']
-        @office_options = {
-            site: ENV["OFFICE_APP_SITE"],
-            token_url: ENV["OFFICE_APP_TOKEN_URL"]
-        }
-        @office_room = 'testroom@internationaltowers.com'
-        client = OAuth2::Client.new(@office_client_id, @office_secret, @office_options)
+        # @office_client_id = ENV["OFFICE_APP_CLIENT_ID"]
+        # @office_secret = ENV["OFFICE_APP_CLIENT_SECRET"]
+        # @office_scope = ENV['OFFICE_APP_SCOPE']
+        # @office_options = {
+        #     site: ENV["OFFICE_APP_SITE"],
+        #     token_url: ENV["OFFICE_APP_TOKEN_URL"]
+        # }
+        # @office_room = 'testroom@internationaltowers.com'
 
-        access_token = client.client_credentials.get_token({
-            :scope => @office_scope
-            # :client_secret => ENV["OFFICE_APP_CLIENT_SECRET"],
-            # :client_id => ENV["OFFICE_APP_CLIENT_ID"]
-        }).token
+        client = OAuth2::Client.new(@office_client_id, @office_secret, {site: @office_site, token_url: @office_token_url})
+
+        begin
+            access_token = client.client_credentials.get_token({
+                :scope => @office_scope
+                # :client_secret => ENV["OFFICE_APP_CLIENT_SECRET"],
+                # :client_id => ENV["OFFICE_APP_CLIENT_ID"]
+            }).token
+        rescue Exception => e
+            logger.debug e.message
+            logger.debug e.backtrace.inspect
+            raise e
+        end
 
 
         # Set out domain, endpoint and content type
