@@ -82,6 +82,7 @@ class Aca::OfficeBooking
         ews_room: 'room@email.address',
 
         # Optional EWS for creating and removing bookings
+        office_organiser_location: 'attendees'
         # office_client_id: ENV["OFFICE_APP_CLIENT_ID"],
         # office_secret: ENV["OFFICE_APP_CLIENT_SECRET"],
         # office_scope: ENV['OFFICE_APP_SCOPE'],
@@ -148,6 +149,7 @@ class Aca::OfficeBooking
         # Do we want to use exchange web services to manage bookings
         if CAN_OFFICE
             logger.debug "Setting OFFICE"
+            @office_organiser_location = setting(:office_organiser_location)
             @office_client_id = setting(:office_client_id)
             @office_secret = setting(:office_secret)
             @office_scope = setting(:office_scope)
@@ -348,7 +350,7 @@ class Aca::OfficeBooking
 
 
         task {
-            todays_bookings(response)
+            todays_bookings(response, @office_organiser_location)
         }.then(proc { |bookings|
             self[:today] = bookings
         }, proc { |e| logger.print_error(e, 'error fetching bookings') })
@@ -609,7 +611,7 @@ class Aca::OfficeBooking
         count
     end
 
-    def todays_bookings(response)
+    def todays_bookings(response, office_organiser_location)
 
         meeting_response = JSON.parse(response.body)['value']
 
@@ -624,11 +626,19 @@ class Aca::OfficeBooking
             start_time = ActiveSupport::TimeZone.new('UTC').parse(booking['start']['dateTime']).iso8601[0..18]
             end_time = ActiveSupport::TimeZone.new('UTC').parse(booking['end']['dateTime']).iso8601[0..18]
 
+            if office_organiser_location == 'attendees'
+                # Grab the first attendee
+                organizer = booking['attendees'][0]['emailAddress']['name']
+            elsif office_organiser_location == 'organizer'
+                # Grab the organiser
+                organizer = booking['organizer']['emailAddress']['name']
+            end
+
             results.push({
                 :Start => start_time,
                 :End => end_time,
                 :Subject => booking['subject'],
-                :owner => 'Temp'
+                :owner => organizer
                 # :setup => 0,
                 # :breakdown => 0
             })
