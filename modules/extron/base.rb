@@ -16,9 +16,6 @@ class Extron::Base
     tokenize delimiter: "\r\n", wait_ready: /Copyright.*/i
 
 
-    def on_load
-    end
-
     def connected
         return if @disable_polling
 
@@ -59,6 +56,6 @@ class Extron::Base
 
     def do_send(data, options = {})
         logger.debug { "requesting cmd: #{data} with #{options}" }
-        send(data << 0x0D, options)
+        send("#{data}\x0D", options)
     end
 end

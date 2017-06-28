@@ -7,7 +7,7 @@ class Extron::Iplt < Extron::Base
     generic_name :DigitalIO
 
     def on_load
-      on_update
+        on_update
     end
 
     def on_update
@@ -46,23 +46,23 @@ class Extron::Iplt < Extron::Base
                         #012345678
                 case data[5..7].to_sym
                 when :Rly
-		    if @invert_relay
-                      self["relay#{data[3].to_i}"] = data[8] == '0' 
+                    if @invert_relay
+                        self["relay#{data[3].to_i}"] = data[8] == '0' 
                     else
-		      self["relay#{data[3].to_i}"] = data[8] == '1' 
-		    end
+                        self["relay#{data[3].to_i}"] = data[8] == '1' 
+                    end
                 when :Sio
-		    if @invert_io
-                     self["io#{data[3].to_i}"] = data[8] == '0' 
-		    else 
-                      self["io#{data[3].to_i}"] = data[8] == '1'
+                    if @invert_io
+                        self["io#{data[3].to_i}"] = data[8] == '0' 
+                    else 
+                        self["io#{data[3].to_i}"] = data[8] == '1'
                     end
                 else
                     logger.info "Unrecognised response: #{data}"
                 end
             else
                 if data == 'E22'    # Busy! We should retry this one
-                    command[:delay_on_receive] = 1 unless command.nil?
+                    command[:delay_on_receive] = 200 unless command.nil?
                     return :failed
                 end
             end
@@ -71,4 +71,3 @@ class Extron::Iplt < Extron::Base
         return :success
     end
 end
-

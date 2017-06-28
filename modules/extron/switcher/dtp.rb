@@ -291,7 +291,7 @@ class Extron::Switcher::Dtp < Extron::Base
                     logger.debug "Extron DSP called preset #{data[3..-1]}"
                 else
                     if data == 'E22'    # Busy! We should retry this one
-                        command[:delay_on_receive] = 1 unless command.nil?
+                        command[:delay_on_receive] = 200 unless command.nil?
                         return :failed
                     elsif data[0] == 'E'
                         logger.info "Extron Error #{ERRORS[data[1..2].to_i]}"
