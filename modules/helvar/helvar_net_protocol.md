@@ -53,11 +53,11 @@ So a full address would be written:-
 * Fade time is in 1/100th of a second. So a fade of 900 is 9 seconds.
 * Level is between 1 and 100
 * Address looks like: 1.2.1.1
-* Direct level, short address: '>V:1,C:14,L:{0},F:{1},@{2}#'
+* Direct level, short address: `>V:1,C:14,L:{0},F:{1},@{2}#`
   * {0} == level, {1} == fade_time, {2} == address
-* Direct level, group address: '>V:1,C:13,G:{0},L:{1},F:{2}#'
+* Direct level, group address: `>V:1,C:13,G:{0},L:{1},F:{2}#`
   * {0} == address, {1} == level, {2} == fade_time
-* Keep socket alive: '>V:1,C:14,L:0,F:9000,@65#'
+* Keep socket alive: `>V:1,C:14,L:0,F:9000,@65#`
   * Write to dummy address to keep socket alive
 
 References:
