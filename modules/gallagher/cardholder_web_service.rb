@@ -36,7 +36,9 @@ class Gallagher::CardholderWebService
         @password       = setting(:password)
         @client_cert    = setting(:client_certificate)
 
-        connect
+        if @session.nil?
+            connect
+        end
     end
 
     def connect
@@ -56,6 +58,8 @@ class Gallagher::CardholderWebService
     ensure
         @connecting = false
     end
+
+    
 
 
     protected
