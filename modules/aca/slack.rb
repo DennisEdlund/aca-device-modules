@@ -4,6 +4,11 @@ class Aca::Slack
     include ::Orchestrator::Transcoder
     include ::Orchestrator::Security
 
+
+    descriptive_name 'Slack Connector'
+    generic_name :Slack
+    implements :logic
+
     def on_load
         create_websocket
 
