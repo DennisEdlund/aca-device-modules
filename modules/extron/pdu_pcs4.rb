@@ -62,17 +62,20 @@ class Extron::PduPcs4 < Extron::Base
         if data =~ /Login/i
             device_ready
         else
+            result = data.split(' ')
             case data[0..2].to_sym
             when :Cpn # Relay or power point status
-                case data[5..7].to_sym
+                index = result[0][3..-1].to_i
+
+                case result[1][0..2].to_sym
                 when :Rly
                     if @invert_relay
-                        self["relay#{data[3].to_i}"] = data[8] == '0' 
+                        self["relay#{index}"] = result[1][-1] == '0' 
                     else
-                        self["relay#{data[3].to_i}"] = data[8] == '1' 
+                        self["relay#{index}"] = result[1][-1] == '1' 
                     end
                 when :Ppc
-                    self["power#{data[3].to_i}"] = data[8] == '1'
+                    self["power#{index}"] = result[1][-1] == '1'
                 else
                     logger.info "Unrecognised response: #{data}"
                 end

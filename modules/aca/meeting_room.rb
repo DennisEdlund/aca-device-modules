@@ -121,6 +121,7 @@ class Aca::MeetingRoom < Aca::Joiner
                 @light_default = self[:lights][:default]
                 @light_present = self[:lights][:present]
                 @light_shutdown = self[:lights][:shutdown]
+                @light_scheduled_shutdown = self[:lights][:scheduled_shutdown]
                 @light_group = setting(:lighting_group)
             end
 
@@ -642,10 +643,10 @@ class Aca::MeetingRoom < Aca::Joiner
         end
     end
 
-    def shutdown_actual
+    def shutdown_actual(scheduled_shutdown: false)
         # Shudown action on Lights
-        if @light_shutdown
-            lights_to_actual(@light_shutdown)
+        if @light_scheduled_shutdown || @light_shutdown
+            lights_to_actual(@light_scheduled_shutdown || @light_shutdown)
             @lights_set = false
         end
 
