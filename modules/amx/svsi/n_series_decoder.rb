@@ -52,7 +52,6 @@ class Amx::Svsi::NSeriesDecoder
     end
 
     def switch_video(stream_id)
-        switch_audio self[:audio]  # lock audio to current stream
         do_send 'set', stream_id
     end
 
