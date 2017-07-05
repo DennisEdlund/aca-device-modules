@@ -57,7 +57,8 @@ class Amx::Svsi::NSeriesDecoder
     end
 
     def switch_audio(stream_id)
-        do_send 'seta', stream_id
+        @previous_stream = stream_id
+        unmute
     end
 
     def switch_kvm(ip_address, video_follow = true)
@@ -72,12 +73,14 @@ class Amx::Svsi::NSeriesDecoder
     def mute(state = true)
         if is_affirmative? state
             do_send 'mute', name: :mute
+            do_send 'seta', 0
         else
             unmute
         end
     end
 
     def unmute
+        do_send 'seta', (@previous_stream || 0)
         do_send 'unmute', name: :mute
     end
 
@@ -185,6 +188,8 @@ class Amx::Svsi::NSeriesDecoder
             status_variable: :audio,
             transform: -> (x) do
                 stream_id = x.to_i
+                self[:audio_actual] = stream_id
+
                 # AFV comes from the device as stream 0
                 # remap to actual audio stream id for status
                 stream_id == 0 ? (@mute ? 0 : @stream) : stream_id
