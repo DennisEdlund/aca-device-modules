@@ -187,7 +187,7 @@ class Amx::Svsi::NSeriesDecoder
                 stream_id = x.to_i
                 # AFV comes from the device as stream 0
                 # remap to actual audio stream id for status
-                stream_id == 0 ? @stream : stream_id
+                stream_id == 0 ? (@mute ? 0 : @stream) : stream_id
             end
         },
         name: {
@@ -201,7 +201,11 @@ class Amx::Svsi::NSeriesDecoder
             transform: -> (x) { x.to_i }
         },
         mute: {
-            transform: -> (x) { x == '1' }
+            transform: -> (x) {
+                val = x == '1'
+                @mute = val
+                val
+            }
         },
         scalerbypass: {
             status_variable: :scaler_active,
@@ -222,9 +226,7 @@ class Amx::Svsi::NSeriesDecoder
         parser = RESPONSE_PARSERS[property]
         unless parser.nil?
             status = parser[:status_variable] || property
-            unless parser[:transform].nil?
-                value = parser[:transform].call(value)
-            end
+            value = self.instance_exec(value, &parser[:transform]) if parser[:transform]
             self[status] = value
         end
 
