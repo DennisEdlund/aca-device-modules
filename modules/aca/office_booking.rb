@@ -420,35 +420,30 @@ class Aca::OfficeBooking
             raise "missing required fields: #{check}"
         end
 
+        logger.debug "Passed Room options: --------------------"
+        logger.debug options
+        logger.debug options.to_json
 
         req_params = {}
         req_params[:room_email] = @ews_room
+        req_params[:organizer] = options[:user_email]
         req_params[:subject] = options[:title]
         req_params[:start_time] = Time.at(options[:start].to_i / 1000).utc.iso8601.chop
         req_params[:end_time] = Time.at(options[:end].to_i / 1000).utc.iso8601.chop
 
-        task {
-            username = options[:user]
-            if username.present?
+       
+        # TODO:: Catch error for booking failure
+        begin
+            id = make_office_booking req_params
+        rescue Exception => e
+            logger.debug e.message
+            logger.debug e.backtrace.inspect
+            raise e
+        end
 
-                user_email = ldap_lookup_email(username)
-                if user_email
-                    req_params[:user_email] = user_email
-                    make_ews_booking req_params
-                else
-                    raise "couldn't find user: #{username}"
-                end
-
-            else
-                make_ews_booking req_params
-            end
-        }.then(proc { |id|
-            logger.debug { "successfully created booking: #{id}" }
-            "Ok"
-        }, proc { |error|
-            logger.print_error error, 'creating ad hoc booking'
-            thread.reject error # propogate the error
-        })
+        
+        logger.debug { "successfully created booking: #{id}" }
+        "Ok"
     end
 
 
@@ -538,35 +533,58 @@ class Aca::OfficeBooking
     # =======================================
     # EWS Requests to occur in a worker thread
     # =======================================
-    def make_ews_booking(user_email: nil, subject: 'On the spot booking', room_email:, start_time:, end_time:)
-        user_email ||= self[:email]  # if swipe card used
+    def make_office_booking(user_email: nil, subject: 'On the spot booking', room_email:, start_time:, end_time:, organizer:)
 
-        booking = {
+        booking_data = {
             subject: subject,
-            start: start_time,
-            end: end_time
+            start: { dateTime: start_time, timeZone: "UTC" },
+            end: { dateTime: end_time, timeZone: "UTC" },
+            location: { displayName: @office_room, locationEmailAddress: @office_room },
+            attendees: [ emailAddress: { address: organizer, name: "User"}]
+        }.to_json
+
+        logger.debug "Creating booking:"
+        logger.debug booking_data
+
+        client = OAuth2::Client.new(@office_client_id, @office_secret, {site: @office_site, token_url: @office_token_url})
+
+        begin
+            access_token = client.client_credentials.get_token({
+                :scope => @office_scope
+                # :client_secret => ENV["OFFICE_APP_CLIENT_SECRET"],
+                # :client_id => ENV["OFFICE_APP_CLIENT_ID"]
+            }).token
+        rescue Exception => e
+            logger.debug e.message
+            logger.debug e.backtrace.inspect
+            raise e
+        end
+
+
+        # Set out domain, endpoint and content type
+        domain = 'https://graph.microsoft.com'
+        host = 'graph.microsoft.com'
+        endpoint = "/v1.0/users/#{@office_room}/events"
+        content_type = 'application/json;odata.metadata=minimal;odata.streaming=true'
+
+        # Create the request URI and config
+        office_api = UV::HttpEndpoint.new(domain, tls_options: {host_name: host})
+        headers = {
+            'Authorization' => "Bearer #{access_token}",
+            'Content-Type' => content_type
         }
 
-        if user_email
-            booking[:required_attendees] = [{
-                attendee: { mailbox: { email_address: user_email } }
-            }]
-        end
+        # Make the request
+        response = office_api.post(path: "#{domain}#{endpoint}", body: booking_data, headers: headers).value
 
-        cli = Viewpoint::EWSClient.new(*@ews_creds)
-        opts = {}
+        logger.debug response.body
+        logger.debug response.to_json
+        logger.debug JSON.parse(response.body)['id']
 
-        if @use_act_as
-            opts[:act_as] = @ews_room if @ews_room
-        else
-            cli.set_impersonation(Viewpoint::EWS::ConnectingSID[@ews_connect_type], @ews_room) if @ews_room
-        end
-
-        folder = cli.get_folder(:calendar, opts)
-        appointment = folder.create_item(booking)
+        id = JSON.parse(response.body)['id']
 
         # Return the booking IDs
-        appointment.item_id
+        id
     end
 
     def delete_ews_booking(delete_at)
@@ -614,8 +632,6 @@ class Aca::OfficeBooking
     def todays_bookings(response, office_organiser_location)
 
         meeting_response = JSON.parse(response.body)['value']
-
-        logger.info meeting_response.to_json
 
         results = []
 

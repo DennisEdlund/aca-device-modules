@@ -16,13 +16,15 @@ class Aca::Slack
     end
 
     def on_update
-        self[:building] = setting(:building) || :barangaroo,
-        self[:channel] = setting(:channel) || :concierge,
+        self[:building] = setting(:building) || :barangaroo
+        self[:channel] = setting(:channel) || :concierge
     end
 
     # Message coming in from Slack API
     def on_message(data)
-
+        logger.debug "------------------ Received message! ------------------"
+        logger.debug data.inspect
+        logger.debug "-------------------------------------------------------"
         # This should always be set as all messages from the slack client should be replies
         if data.thread_ts
             user_id = get_user_id(thread_id)
@@ -55,12 +57,12 @@ class Aca::Slack
         if thread_id
             # Get the messages
             {
-                thread_id: thread_id
+                thread_id: thread_id,
                 messages: []
             }
         else
             {
-                thread_id: nil
+                thread_id: nil,
                 messages: []
             }
         end
@@ -89,6 +91,8 @@ class Aca::Slack
 
         @client = Slack::RealTime::Client.new
 
+        logger.debug @client.inspect
+        logger.debug "Created client!!"
 
         @client.on :message do |data|
 
