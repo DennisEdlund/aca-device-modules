@@ -40,6 +40,11 @@ class Extron::PduPcs4 < Extron::Base
         send("1O\x0D")
     end
 
+    def device_ready
+        super # Call device ready in Extron::Base
+        (1..4).each { |point| power?(point) }
+    end
+
 
     ERRORS = {
         12 => 'Invalid port number',
