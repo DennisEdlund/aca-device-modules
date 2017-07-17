@@ -1,4 +1,4 @@
-load File.expand_path('./sx_telnet.rb', File.dirname(__FILE__))
+load File.expand_path('./sx_ssh.rb', File.dirname(__FILE__))
 load File.expand_path('./sx_camera_common.rb', File.dirname(__FILE__))
 
 

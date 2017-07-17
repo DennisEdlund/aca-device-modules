@@ -47,6 +47,8 @@ class Cisco::TelePresence::SxSsh
     def connected
         do_send "Echo off", wait: false, priority: 96
     end
+
+    def disconnected; end
     
     
     protected
