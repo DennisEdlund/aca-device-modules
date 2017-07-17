@@ -2,9 +2,9 @@ load File.expand_path('./sx_telnet.rb', File.dirname(__FILE__))
 load File.expand_path('./sx_camera_common.rb', File.dirname(__FILE__))
 
 
-class Cisco::TelePresence::SxCamera < Cisco::TelePresence::SxTelnet
+class Cisco::TelePresence::SxCameraSsh < Cisco::TelePresence::SxSsh
     include Cisco::TelePresence::SxCameraCommon
 
-    descriptive_name 'Cisco TelePresence Camera'
+    descriptive_name 'Cisco TelePresence Camera (secure)'
     generic_name :Camera
 end
