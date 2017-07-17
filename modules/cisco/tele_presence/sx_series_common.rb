@@ -1,5 +1,5 @@
 
-class Cisco::TelePresence::SxSeriesCommon
+module Cisco::TelePresence::SxSeriesCommon
     def on_load
         super
 
