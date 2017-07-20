@@ -78,11 +78,11 @@ Settings:
         end
     end
 
-    def light_level(index, level)
+    def light_level(index, level, *args)
         send_request index, level.to_i
     end
 
-    def lighting(index, state)
+    def lighting(index, state, *args)
         val = is_affirmative?(state) ? 1 : 0
         send_request index, val
     end
@@ -93,7 +93,7 @@ Settings:
     def send_request(index, value)
         logger.debug { "Requesting #{index} = #{value}" }
         req = @os.action(index, value).to_binary_s
-        send req
+        send req, name: "index#{index}_level"
     end
 
     def send_query(num)
