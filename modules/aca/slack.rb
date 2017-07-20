@@ -1,3 +1,5 @@
+require 'slack-ruby-client'
+require 'slack/real_time/concurrency/libuv'
 
 class Aca::Slack
     include ::Orchestrator::Constants
@@ -82,14 +84,17 @@ class Aca::Slack
     # Create a realtime WS connection to the Slack servers
     def create_websocket
 
-        Slack.configure do |config|
+        ::Slack.configure do |config|
             config.token = setting(:slack_api_token)
             config.logger = Logger.new(STDOUT)
             config.logger.level = Logger::INFO
             fail 'Missing slack api token setting!' unless config.token
         end
+	::Slack::RealTime.configure do |config|
+	    config.concurrency = Slack::RealTime::Concurrency::Libuv
+	end
 
-        @client = Slack::RealTime::Client.new
+        @client = ::Slack::RealTime::Client.new
 
         logger.debug @client.inspect
         logger.debug "Created client!!"
