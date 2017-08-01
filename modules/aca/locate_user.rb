@@ -25,7 +25,32 @@ class Aca::LocateUser
         mac = perform_arp_request(ip).value
         if mac
             # store the mac address in the database
-            ::User.bucket.set("macuser-#{mac}", login, expire_at: 3.years.from_now)
+            bucket = ::User.bucket
+            expire = 1.year.from_now
+            mac_key = "macuser-#{mac}"
+
+            # Associate user with the MAC address
+            old_login = ::User.bucket.get(mac_key, quiet: true)
+            bucket.set(mac_key, login, expire_at: expire)
+
+            # Remove the MAC address from any previous user
+            if old_user
+                user_key = "usermacs-#{old_login}"
+                user_macs = bucket.get(user_key, quiet: true)
+                if user_macs
+                    user_macs[:macs].delete(mac)
+                    bucket.set(user_key, user_macs, expire_at: expire)
+                end
+            end
+
+            # Update the users list of MAC addresses
+            user_key = "usermacs-#{login}"
+            user_macs = bucket.get(user_key, quiet: true) || {macs: []}
+            if not user_macs[:macs].include?(mac)
+                user_macs[:macs].unshift(mac)
+                bucket.set(user_key, user_macs, expire_at: expire)
+            end
+
             self[ip] = login
         else
             logger.debug { "unable to locate MAC for #{ip}" }
