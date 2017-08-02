@@ -24,18 +24,26 @@ class Aca::Slack
 
     # Message coming in from Slack API
     def on_message(data)
-        logger.debug "------------------ Received message! ------------------"
+        logger.debug "------------------ Message from Slack API:  ------------------"
         logger.debug data.inspect
-        logger.debug "-------------------------------------------------------"
+        logger.debug "--------------------------------------------------------------"
         # This should always be set as all messages from the slack client should be replies
-        if data.thread_ts
-            user_id = get_user_id(data.thread_ts)
-            self["last_message_#{user_id}"] = data
+        if data.thread_ts || data.ts 
+            user_id = get_user_id(data.thread_ts) || get_user_id(data.ts)
+            logger.debug "---------------Setting last_message_#{user_id}-----------"
+            logger.debug data
+	    logger.debug "---------------------------------------------------------"
+	    if !user_id.nil?
+            	self["last_message_#{user_id}"] = data
+	    end
         end
     end
 
     # Message from the frontend
     def send_message(message_text)
+         logger.debug "------------------ Message from the frontend:  ------------------"
+         logger.debug message_text.inspect
+         logger.debug "-----------------------------------------------------------------"
         user = current_user
         thread_id = get_thread_id(user)
 
@@ -45,10 +53,13 @@ class Aca::Slack
 
         else
             message = @client.web_client.chat_postMessage channel: setting(:channel), text: message_text, username: "#{current_user.name} (#{current_user.email})"            
+	    # logger.debug "Message from frontend:"
+	    # logger.debug message.to_json
             # Store thread id
             thread_id = message['message']['ts']
             User.bucket.set("slack-thread-#{user.id}-#{setting(:building)}", thread_id)
             User.bucket.set("slack-user-#{thread_id}", user.id)
+	    on_message(message.message)
         end
     end
 
@@ -95,6 +106,9 @@ class Aca::Slack
     def create_websocket
 
         ::Slack.configure do |config|
+	    logger.debug "Token:"
+	    logger.debug setting(:slack_api_token)
+	    logger.debug setting(:channel)
             config.token = setting(:slack_api_token)
             config.logger = Logger.new(STDOUT)
             config.logger.level = Logger::INFO
