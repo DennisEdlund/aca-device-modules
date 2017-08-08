@@ -180,7 +180,11 @@ class GlobalCache::Gc100
         
         command << 0x0D
         
-        send(command, options)
+        send(command, options).catch do |err|
+            # Speed up disconnect
+            disconnect
+            thread.reject(err)
+        end
     end
 end
 
