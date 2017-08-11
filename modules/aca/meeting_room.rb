@@ -135,7 +135,7 @@ class Aca::MeetingRoom < Aca::Joiner
                 @original_max = setting(:vol_max)
                 self[:vol_max] = @original_max
             end
-            
+
 
             # Get the list of apps and channels
             @apps = setting(:apps)
@@ -520,7 +520,7 @@ class Aca::MeetingRoom < Aca::Joiner
 
             # Update the mic mappings
             self[:mics] = mode[:mics] || setting(:mics)
-            
+
             # Update the preview mappings
             self[:has_preview] = mode[:has_preview] || setting(:has_preview)
 
@@ -625,7 +625,8 @@ class Aca::MeetingRoom < Aca::Joiner
         # Turn on VC cameras
         start_cameras unless @no_cam_on_boot
 
-        preview(self[self[:tab]][0])
+        # Ensure the preview reflects default UI state
+        preview(self[self[:tab]][0]) if self[:has_preview] && self[:tab]
     end
 
 
@@ -653,7 +654,7 @@ class Aca::MeetingRoom < Aca::Joiner
         switch_mode(@defaults[:shutdown_mode]) if @defaults[:shutdown_mode]
 
         mixer = system[:Mixer]
-        
+
         # Hangup any softphone calls and blank the phone number on the UI and DSP
         if self[:phone_settings] && !mixer.nil?
           mixer.phone_hangup(self[:phone_settings][:hangup_id])
@@ -1106,7 +1107,7 @@ class Aca::MeetingRoom < Aca::Joiner
             else
               switcher.switch({disp_source[:input] => disp_info[:output]})
             end
-            
+
             if disp_source[:audio_deembed]
                 switcher.switch({disp_source[:input] => disp_source[:audio_deembed]})
             end
